@@ -1,16 +1,17 @@
+
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 WindUI:AddTheme({
     Name = "POWER",
     
-    Accent = Color3.fromHex("#18181b"),
-    Dialog = Color3.fromHex("#161616"),
-    Outline = Color3.fromHex("#FFFFFF"),
+    Accent = Color3.fromHex("#FF6B00"),
+    Dialog = Color3.fromHex("#1a1a1a"),
+    Outline = Color3.fromHex("#FF8C00"),
     Text = Color3.fromHex("#FFFFFF"),
-    Placeholder = Color3.fromHex("#7a7a7a"),
-    Background = Color3.fromHex("#101010"),
-    Button = Color3.fromHex("#52525b"),
-    Icon = Color3.fromHex("#a1a1aa")
+    Placeholder = Color3.fromHex("#CC5500"),
+    Background = Color3.fromHex("#0d0d0d"),
+    Button = Color3.fromHex("#FF6B00"),
+    Icon = Color3.fromHex("#FFA500")
 })
 
 WindUI:SetTheme("POWER")
@@ -88,7 +89,7 @@ TabHome:Paragraph({
     }
 })
 
--- TAB AUTO FARM (in Game Section) - Added first in Game section
+-- TAB AUTO FARM (in Game Section)
 local TabAutoFarm = SectionGame:Tab({
     Title = "Auto Farm",
     Icon = "zap"
@@ -96,7 +97,7 @@ local TabAutoFarm = SectionGame:Tab({
 
 TabAutoFarm:Paragraph({
     Title = "Auto Farm Brainrots",
-    Desc = "Automatically farm brainrots with Frost Grenade",
+    Desc = "Automatically farm brainrots with Frost Grenade or Bat",
     Locked = false
 })
 
@@ -118,7 +119,7 @@ local RarityDropdown = TabAutoFarm:Dropdown({
 
 TabAutoFarm:Toggle({
     Title = "Enable Auto Farm",
-    Description = "Auto teleport and use Frost Grenade on brainrots",
+    Description = "Auto teleport and use weapon on brainrots",
     Default = false,
     Callback = function(value)
         AutoFarmEnabled = value
@@ -440,22 +441,19 @@ TabSell:Paragraph({
                     
                     for _, plant in ipairs(SelectedSellPlants) do
                         local success = pcall(function()
-                            -- Equip plant first
                             local player = game:GetService("Players").LocalPlayer
                             local character = player.Character
                             if character then
                                 local humanoid = character:FindFirstChildOfClass("Humanoid")
                                 if humanoid then
-                                    -- Find plant in backpack or character
                                     local plantItem = player.Backpack:FindFirstChild(plant) or character:FindFirstChild(plant)
                                     if plantItem then
                                         humanoid:EquipTool(plantItem)
-                                        task.wait(0.2) -- Wait for equip
+                                        task.wait(0.2)
                                         
-                                        -- Sell the equipped plant
                                         game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
                                         soldCount = soldCount + 1
-                                        task.wait(0.2) -- Delay between sells
+                                        task.wait(0.2)
                                     else
                                         warn("✗ Plant not found: " .. plant)
                                     end
@@ -635,6 +633,7 @@ task.spawn(function()
         end
     end
     
+    -- Tìm Frost Grenade
     local function findFrostGrenade()
         for _, container in ipairs({character, player:WaitForChild("Backpack")}) do
             for _, item in ipairs(container:GetChildren()) do
@@ -646,91 +645,131 @@ task.spawn(function()
         return nil
     end
     
-    local function fireFrostGrenade(brainrot)
-        if not brainrot or not brainrot.Parent then return end
-        local progress = brainrot:GetAttribute("Progress") or 0
-        if progress > 0.6 then
-            local tool = findFrostGrenade()
-            if tool then
-                local bp = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
-                if bp then
-                    humanoid:EquipTool(tool)
-                    local useItemRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseItem")
-                    local args = {{
-                        Toggle = true,
-                        Tool = tool,
-                        Time = 0.5,
-                        Pos = Vector3.new(bp.Position.X, bp.Position.Y, bp.Position.Z)
-                    }}
-                    useItemRemote:FireServer(unpack(args))
-                end
-            end
-        end
-    end
-    
-    local brainrotsFolder = Workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
-    local DETECT_RADIUS = 20
-    local FIRE_INTERVAL = 2
-    
-    local function findTargetBrainrot(selectedRarities)
-        for _, b in ipairs(brainrotsFolder:GetChildren()) do
-            if b:IsA("Model") then
-                local rarity = b:GetAttribute("Rarity")
-                if rarity and table.find(selectedRarities, rarity) then
-                    local primary = b.PrimaryPart or b:FindFirstChildWhichIsA("BasePart")
-                    if primary then
-                        for _, roadPart in ipairs(roadParts) do
-                            if (primary.Position - roadPart.Position).Magnitude <= DETECT_RADIUS then
-                                return b
-                            end
-                        end
-                    end
+    -- Tìm item có "bat" trong tên
+    local function findBatItem()
+        for _, container in ipairs({character, player:WaitForChild("Backpack")}) do
+            for _, item in ipairs(container:GetChildren()) do
+                if item:IsA("Tool") and string.lower(item.Name):match("bat") then
+                    return item
                 end
             end
         end
         return nil
     end
     
-    while true do
-        if AutoFarmEnabled then
-            local targetBrainrot = findTargetBrainrot(SelectedRarities)
-            if targetBrainrot then
-                local targetPart = targetBrainrot.PrimaryPart or targetBrainrot:FindFirstChildWhichIsA("BasePart")
-                if targetPart then
-                    noclip()
-                    hrp.CFrame = CFrame.new(targetPart.Position)
-                    local bodyPos = Instance.new("BodyPosition")
-                    bodyPos.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-                    bodyPos.P = 5000
-                    bodyPos.D = 100
-                    bodyPos.Position = hrp.Position
-                    bodyPos.Parent = hrp
-                    local lastFire = 0
-                    while targetBrainrot.Parent and AutoFarmEnabled do
-                        bodyPos.Position = targetPart.Position
-                        local progress = targetBrainrot:GetAttribute("Progress") or 0
-                        if progress > 0.6 then
-                            local tool = findFrostGrenade()
-                            if tool then
-                                humanoid:EquipTool(tool)
-                            end
-                        end
-                        local now = tick()
-                        if now - lastFire >= FIRE_INTERVAL then
-                            fireFrostGrenade(targetBrainrot)
-                            lastFire = now
-                        end
-                        task.wait(0.03)
-                    end
-                    humanoid:UnequipTools()
-                    bodyPos:Destroy()
-                    clip()
+    -- Equip tool
+    local function equipTool(tool)
+        if not tool then return false end
+        
+        if tool.Parent == player.Backpack then
+            humanoid:EquipTool(tool)
+            task.wait(0.2)
+            return true
+        elseif tool.Parent == character then
+            return true
+        end
+        return false
+    end
+    
+    -- Sử dụng Frost Grenade hoặc Bat item
+    local function attackBrainrot(brainrot)
+        if not brainrot or not brainrot.Parent then return false end
+        
+        local progress = brainrot:GetAttribute("Progress") or 0
+        if progress >= 100 then return false end
+        
+        -- Ưu tiên Frost Grenade
+        local weapon = findFrostGrenade()
+        if not weapon then
+            -- Nếu không có Frost Grenade thì dùng Bat item
+            weapon = findBatItem()
+        end
+        
+        if not weapon then 
+            warn("✗ Không tìm thấy vũ khí (Frost Grenade hoặc Bat)!")
+            return false
+        end
+        
+        -- Equip và sử dụng
+        if equipTool(weapon) then
+            local success = pcall(function()
+                if weapon.Name:match("Frost Grenade") then
+                    -- Dùng Frost Grenade
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseGear"):FireServer(
+                        weapon,
+                        brainrot.PrimaryPart.Position
+                    )
+                else
+                    -- Dùng Bat item
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseGear"):FireServer(
+                        weapon,
+                        brainrot.PrimaryPart.Position
+                    )
                 end
-            else
-                task.wait(1)
+            end)
+            
+            if success then
+                print("✓ Đã tấn công bằng: " .. weapon.Name)
+                return true
             end
+        end
+        
+        return false
+    end
+    
+    -- Main Auto Farm Loop
+    while task.wait(0.5) do
+        if not AutoFarmEnabled then continue end
+        
+        -- Tìm brainrots trong plots
+        local brainrotsFolder = Workspace:FindFirstChild("Brainrots")
+        if not brainrotsFolder then continue end
+        
+        local targetBrainrot = nil
+        local targetRarity = nil
+        
+        for _, brainrot in ipairs(brainrotsFolder:GetChildren()) do
+            if brainrot:IsA("Model") and brainrot.PrimaryPart then
+                local rarity = brainrot:GetAttribute("Rarity")
+                local progress = brainrot:GetAttribute("Progress") or 0
+                
+                -- Check nếu rarity nằm trong danh sách đã chọn
+                if rarity and progress < 100 and type(SelectedRarities) == "table" then
+                    for _, selectedRarity in ipairs(SelectedRarities) do
+                        if rarity == selectedRarity then
+                            targetBrainrot = brainrot
+                            targetRarity = rarity
+                            break
+                        end
+                    end
+                end
+                
+                if targetBrainrot then break end
+            end
+        end
+        
+        -- Nếu tìm thấy target
+        if targetBrainrot then
+            noclip()
+            
+            -- Teleport đến brainrot
+            local targetPos = targetBrainrot.PrimaryPart.Position
+            hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+            task.wait(0.3)
+            
+            -- Tấn công brainrot
+            attackBrainrot(targetBrainrot)
+            
+            print("🎯 Đang farm: " .. targetRarity .. " brainrot")
+            task.wait(0.5)
+            
+            clip()
         else
-            task.wait(1)
+            -- Về vị trí an toàn nếu không có target
+            if #roadParts > 0 then
+                local safePart = roadParts[math.random(1, #roadParts)]
+                hrp.CFrame = safePart.CFrame + Vector3.new(0, 3, 0)
+            end
         end
     end
 end)
