@@ -646,6 +646,28 @@ task.spawn(function()
         return nil
     end
     
+    local function equipSecondSlot()
+        local backpack = player:WaitForChild("Backpack")
+        local tools = {}
+        
+        -- Collect all tools from backpack
+        for _, item in ipairs(backpack:GetChildren()) do
+            if item:IsA("Tool") then
+                table.insert(tools, item)
+            end
+        end
+        
+        -- Equip the second tool if exists
+        if #tools >= 2 then
+            humanoid:EquipTool(tools[2])
+            return tools[2]
+        elseif #tools == 1 then
+            humanoid:EquipTool(tools[1])
+            return tools[1]
+        end
+        return nil
+    end
+    
     local function fireFrostGrenade(brainrot)
         if not brainrot or not brainrot.Parent then return end
         local progress = brainrot:GetAttribute("Progress") or 0
@@ -705,10 +727,20 @@ task.spawn(function()
                     bodyPos.D = 100
                     bodyPos.Position = hrp.Position
                     bodyPos.Parent = hrp
+                    
+                    -- Equip second slot item immediately
+                    local equippedTool = equipSecondSlot()
+                    
                     local lastFire = 0
                     while targetBrainrot.Parent and AutoFarmEnabled do
                         bodyPos.Position = targetPart.Position
                         local progress = targetBrainrot:GetAttribute("Progress") or 0
+                        
+                        -- Always keep second slot equipped
+                        if not character:FindFirstChildOfClass("Tool") then
+                            equipSecondSlot()
+                        end
+                        
                         if progress > 0.6 then
                             local tool = findFrostGrenade()
                             if tool then
