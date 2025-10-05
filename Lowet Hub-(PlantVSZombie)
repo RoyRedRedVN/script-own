@@ -646,26 +646,51 @@ task.spawn(function()
         return nil
     end
     
-    local function equipSecondSlot()
-        local backpack = player:WaitForChild("Backpack")
-        local tools = {}
+    local function getHotbarSlot(slotNumber)
+        local playerGui = player:WaitForChild("PlayerGui")
+        local hotbar = playerGui:WaitForChild("Hotbar")
+        if not hotbar then return nil end
         
-        -- Collect all tools from backpack
-        for _, item in ipairs(backpack:GetChildren()) do
-            if item:IsA("Tool") then
-                table.insert(tools, item)
+        local backpack = hotbar:FindFirstChild("Backpack")
+        if not backpack then return nil end
+        
+        local hotbarFrame = backpack:FindFirstChild("Hotbar")
+        if not hotbarFrame then return nil end
+        
+        -- Find slot 2 (index starts at 1 in Roblox)
+        for _, slot in ipairs(hotbarFrame:GetChildren()) do
+            if slot:IsA("Frame") and slot.Name == tostring(slotNumber) then
+                local toolName = slot:GetAttribute("Tool")
+                if toolName then
+                    -- Find the tool in backpack or character
+                    local tool = player.Backpack:FindFirstChild(toolName) or character:FindFirstChild(toolName)
+                    return tool
+                end
             end
         end
-        
-        -- Equip the second tool if exists
-        if #tools >= 2 then
-            humanoid:EquipTool(tools[2])
-            return tools[2]
-        elseif #tools == 1 then
-            humanoid:EquipTool(tools[1])
-            return tools[1]
+        return nil
+    end
+    
+    local function equipSlot2()
+        local slot2Tool = getHotbarSlot(2)
+        if slot2Tool and slot2Tool:IsA("Tool") then
+            humanoid:EquipTool(slot2Tool)
+            return slot2Tool
         end
         return nil
+    end
+    
+    local function autoClick()
+        local VirtualInputManager = game:GetService("VirtualInputManager")
+        local camera = Workspace.CurrentCamera
+        local screenSize = camera.ViewportSize
+        local centerX = screenSize.X / 2
+        local centerY = screenSize.Y / 2
+        
+        -- Simulate mouse click at center of screen
+        VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+        task.wait(0.05)
+        VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
     end
     
     local function fireFrostGrenade(brainrot)
@@ -728,17 +753,33 @@ task.spawn(function()
                     bodyPos.Position = hrp.Position
                     bodyPos.Parent = hrp
                     
-                    -- Equip second slot item immediately
-                    local equippedTool = equipSecondSlot()
+                    -- Equip slot 2 item immediately
+                    equipSlot2()
                     
                     local lastFire = 0
+                    local lastClick = 0
+                    local CLICK_INTERVAL = 0.1 -- Click every 0.1 seconds
+                    
                     while targetBrainrot.Parent and AutoFarmEnabled do
                         bodyPos.Position = targetPart.Position
                         local progress = targetBrainrot:GetAttribute("Progress") or 0
                         
-                        -- Always keep second slot equipped
-                        if not character:FindFirstChildOfClass("Tool") then
-                            equipSecondSlot()
+                        -- Check current equipped tool
+                        local currentTool = character:FindFirstChildOfClass("Tool")
+                        local isHoldingSlot2 = currentTool and not string.match(currentTool.Name, "Frost Grenade")
+                        
+                        -- Auto click if holding slot 2 tool
+                        if isHoldingSlot2 then
+                            local now = tick()
+                            if now - lastClick >= CLICK_INTERVAL then
+                                autoClick()
+                                lastClick = now
+                            end
+                        end
+                        
+                        -- Keep slot 2 equipped when not using Frost Grenade
+                        if not currentTool or (not string.match(currentTool.Name, "Frost Grenade") and progress <= 0.6) then
+                            equipSlot2()
                         end
                         
                         if progress > 0.6 then
@@ -747,6 +788,7 @@ task.spawn(function()
                                 humanoid:EquipTool(tool)
                             end
                         end
+                        
                         local now = tick()
                         if now - lastFire >= FIRE_INTERVAL then
                             fireFrostGrenade(targetBrainrot)
