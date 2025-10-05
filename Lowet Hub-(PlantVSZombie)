@@ -24,6 +24,7 @@ local Window = WindUI:CreateWindow({
 -- Variables
 local SelectedSeeds = {}
 local SelectedGears = {}
+local SelectedSellPlants = {}
 local AutoBuySelectSeed = false
 local AutoBuyAllSeeds = false
 local AutoBuySelectGear = false
@@ -183,7 +184,7 @@ TabSell:Paragraph({
 
 TabSell:Paragraph({
     Title = "Sell Trash Items",
-    Desc = "Quick sell common, epic, and legendary items",
+    Desc = "Quick sell items by rarity",
     Locked = false,
     Buttons = {
         {
@@ -230,20 +231,80 @@ TabSell:Paragraph({
                     warn("✗ Failed to sell Legendary items")
                 end
             end
+        },
+        {
+            Icon = "trash-2",
+            Title = "Sell Godly",
+            Callback = function()
+                local success = pcall(function()
+                    local args = {"Godly"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                end)
+                if success then
+                    print("✓ Sold all Godly items!")
+                else
+                    warn("✗ Failed to sell Godly items")
+                end
+            end
+        },
+        {
+            Icon = "trash-2",
+            Title = "Sell Mythic",
+            Callback = function()
+                local success = pcall(function()
+                    local args = {"Mythic"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                end)
+                if success then
+                    print("✓ Sold all Mythic items!")
+                else
+                    warn("✗ Failed to sell Mythic items")
+                end
+            end
+        },
+        {
+            Icon = "trash-2",
+            Title = "Sell Secret",
+            Callback = function()
+                local success = pcall(function()
+                    local args = {"Secret"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                end)
+                if success then
+                    print("✓ Sold all Secret items!")
+                else
+                    warn("✗ Failed to sell Secret items")
+                end
+            end
+        },
+        {
+            Icon = "trash-2",
+            Title = "Sell Limited",
+            Callback = function()
+                local success = pcall(function()
+                    local args = {"Limited"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                end)
+                if success then
+                    print("✓ Sold all Limited items!")
+                else
+                    warn("✗ Failed to sell Limited items")
+                end
+            end
         }
     }
 })
 
 TabSell:Paragraph({
     Title = "Sell All Trash",
-    Desc = "Sell Common + Epic + Legendary at once",
+    Desc = "Sell multiple rarities at once",
     Locked = false,
     Buttons = {
         {
             Icon = "trash",
             Title = "Sell All Trash",
             Callback = function()
-                local rarities = {"Common", "Epic", "Legendary"}
+                local rarities = {"Common", "Epic", "Legendary", "Godly", "Mythic", "Secret", "Limited"}
                 local soldCount = 0
                 
                 for _, rarity in ipairs(rarities) do
@@ -258,6 +319,91 @@ TabSell:Paragraph({
                 end
                 
                 print("✓ Sold " .. soldCount .. " rarity types!")
+            end
+        }
+    }
+})
+
+TabSell:Paragraph({
+    Title = "Sell Plants",
+    Desc = "Auto equip and sell selected plants",
+    Locked = false
+})
+
+local SellPlantsDropdown = TabSell:Dropdown({
+    Title = "Select Plants to Sell",
+    Values = {
+        "Cactus",
+        "Strawberry",
+        "Pumpkin",
+        "Dragon Fruit",
+        "Eggplant",
+        "Watermelon",
+        "Cocotank",
+        "Grape",
+        "Carnivorous Plant",
+        "Mr carrot",
+        "Shroombino",
+        "Tomatrio",
+        "Mango"
+    },
+    Value = {},
+    Multi = true,
+    AllowNone = true,
+    Callback = function(selected)
+        SelectedSellPlants = selected
+        if type(selected) == "table" then
+            print("Selected Plants to Sell: " .. game:GetService("HttpService"):JSONEncode(selected))
+        end
+    end
+})
+
+TabSell:Paragraph({
+    Title = "Sell Selected Plants",
+    Desc = "Auto equip then sell the selected plants",
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "hand",
+            Title = "Sell Plants",
+            Callback = function()
+                if type(SelectedSellPlants) == "table" and #SelectedSellPlants > 0 then
+                    local soldCount = 0
+                    
+                    for _, plant in ipairs(SelectedSellPlants) do
+                        local success = pcall(function()
+                            -- Equip plant first
+                            local player = game:GetService("Players").LocalPlayer
+                            local character = player.Character
+                            if character then
+                                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                                if humanoid then
+                                    -- Find plant in backpack or character
+                                    local plantItem = player.Backpack:FindFirstChild(plant) or character:FindFirstChild(plant)
+                                    if plantItem then
+                                        humanoid:EquipTool(plantItem)
+                                        task.wait(0.2) -- Wait for equip
+                                        
+                                        -- Sell the equipped plant
+                                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
+                                        soldCount = soldCount + 1
+                                        task.wait(0.2) -- Delay between sells
+                                    else
+                                        warn("✗ Plant not found: " .. plant)
+                                    end
+                                end
+                            end
+                        end)
+                        
+                        if not success then
+                            warn("✗ Failed to sell: " .. plant)
+                        end
+                    end
+                    
+                    print("✓ Sold " .. soldCount .. "/" .. #SelectedSellPlants .. " plants!")
+                else
+                    warn("✗ No plants selected!")
+                end
             end
         }
     }
