@@ -1,9 +1,7 @@
-
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 WindUI:AddTheme({
     Name = "POWER",
-    
     Accent = Color3.fromHex("#FF6B00"),
     Dialog = Color3.fromHex("#1a1a1a"),
     Outline = Color3.fromHex("#FF8C00"),
@@ -22,46 +20,41 @@ local Window = WindUI:CreateWindow({
     Author = "by RedMod",
 })
 
--- Section Main for Home
-local SectionMain = Window:Section({
-    Title = "Main",
-    Icon = "house",
-    Opened = true,
-})
+-- Tạo function thông báo đẹp thay vì dùng print thông thường
+local function Notify(title, content, icon)
+    WindUI:Notify({
+        Title = title,
+        Content = content,
+        Duration = 3,
+        Icon = icon or "info",
+    })
+end
 
--- Section Game for gameplay features
-local SectionGame = Window:Section({
-    Title = "Game",
-    Icon = "gamepad-2",
-    Opened = true,
-})
-
--- Section Settings for misc
-local SectionSettings = Window:Section({
-    Title = "Settings",
-    Icon = "settings",
-    Opened = true,
-})
-
--- Variables
+-- Các biến toàn cục để lưu trữ cài đặt
 local SelectedSeeds = {}
 local SelectedGears = {}
 local SelectedSellPlants = {}
+local SelectedRarities = {"Secret", "Limited"}
 local AutoBuySelectSeed = false
 local AutoBuyAllSeeds = false
 local AutoBuySelectGear = false
 local AutoBuyAllGear = false
 local AutoFarmEnabled = false
 
--- Services
+-- Lấy các service cần thiết từ Roblox
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
 
--- TAB HOME (in Main Section)
+-- ===================== TAB HOME =====================
+local SectionMain = Window:Section({
+    Title = "Main",
+    Icon = "house",
+    Opened = true,
+})
+
 local TabHome = SectionMain:Tab({
     Title = "Home",
     Icon = "house"
@@ -69,13 +62,7 @@ local TabHome = SectionMain:Tab({
 
 TabHome:Paragraph({
     Title = "Welcome to Lowet Hub",
-    Desc = "Join our Discord community for updates and support!",
-    Locked = false
-})
-
-TabHome:Paragraph({
-    Title = "Discord Server",
-    Desc = "https://discord.gg/VyQfTtDJnY",
+    Desc = "Join our Discord: https://discord.gg/VyQfTtDJnY",
     Locked = false,
     Buttons = {
         {
@@ -83,13 +70,19 @@ TabHome:Paragraph({
             Title = "Copy Link",
             Callback = function()
                 setclipboard("https://discord.gg/VyQfTtDJnY")
-                print("✓ Discord link copied to clipboard!")
+                Notify("Success", "Discord link copied!", "check")
             end
         }
     }
 })
 
--- TAB AUTO FARM (in Game Section)
+-- ===================== TAB AUTO FARM =====================
+local SectionGame = Window:Section({
+    Title = "Game",
+    Icon = "gamepad-2",
+    Opened = true,
+})
+
 local TabAutoFarm = SectionGame:Tab({
     Title = "Auto Farm",
     Icon = "zap"
@@ -97,13 +90,11 @@ local TabAutoFarm = SectionGame:Tab({
 
 TabAutoFarm:Paragraph({
     Title = "Auto Farm Brainrots",
-    Desc = "Automatically farm brainrots with Frost Grenade or Bat",
+    Desc = "Farm brainrots với Frost Grenade hoặc Bat",
     Locked = false
 })
 
-local SelectedRarities = {"Secret", "Limited"}
-
-local RarityDropdown = TabAutoFarm:Dropdown({
+TabAutoFarm:Dropdown({
     Title = "Select Rarities to Farm",
     Values = {"Rare", "Epic", "Legendary", "Mythic", "Godly", "Secret", "Limited"},
     Value = {"Secret", "Limited"},
@@ -111,457 +102,242 @@ local RarityDropdown = TabAutoFarm:Dropdown({
     AllowNone = true,
     Callback = function(selected)
         SelectedRarities = selected
-        if type(selected) == "table" then
-            print("Selected Rarities: " .. game:GetService("HttpService"):JSONEncode(selected))
+        if #selected > 0 then
+            Notify("Rarities", table.concat(selected, ", "), "target")
         end
     end
 })
 
 TabAutoFarm:Toggle({
     Title = "Enable Auto Farm",
-    Description = "Auto teleport and use weapon on brainrots",
+    Description = "Bật/tắt auto farm brainrots",
     Default = false,
     Callback = function(value)
         AutoFarmEnabled = value
-        print("Auto Farm:", value)
+        Notify("Auto Farm", value and "Enabled" or "Disabled", value and "zap" or "x")
     end
 })
 
--- TAB SEEDS (in Game Section)
+-- ===================== TAB SEEDS =====================
 local TabSeeds = SectionGame:Tab({
     Title = "Seeds",
     Icon = "sprout"
 })
 
-TabSeeds:Paragraph({
-    Title = "Seeds Manager",
-    Desc = "Buy and manage your seeds",
-    Locked = false
-})
-
-local SeedsDropdown = TabSeeds:Dropdown({
+TabSeeds:Dropdown({
     Title = "Select Seeds",
-    Values = {
-        "Cactus",
-        "Strawberry",
-        "Pumpkin",
-        "Dragon Fruit",
-        "Eggplant",
-        "Watermelon",
-        "Cocotank",
-        "Grape",
-        "Carnivorous Plant",
-        "Mr carrot",
-        "Shroombino",
-        "Tomatrio",
-        "Mango"
-    },
+    Values = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
     Value = {},
     Multi = true,
-    AllowNone = true,
     Callback = function(selected)
         SelectedSeeds = selected
-        if type(selected) == "table" then
-            print("Selected Seeds: " .. game:GetService("HttpService"):JSONEncode(selected))
-        end
     end
 })
 
 TabSeeds:Toggle({
     Title = "Auto Buy Selected",
-    Description = "Auto buy selected seeds",
     Default = false,
     Callback = function(value)
         AutoBuySelectSeed = value
-        print("Auto Buy Selected Seeds:", value)
+        Notify("Seeds", value and "Auto buy ON" or "Auto buy OFF", "shopping-cart")
     end
 })
 
 TabSeeds:Toggle({
     Title = "Auto Buy All",
-    Description = "Auto buy all seeds",
     Default = false,
     Callback = function(value)
         AutoBuyAllSeeds = value
-        print("Auto Buy All Seeds:", value)
+        Notify("Seeds", value and "Buy all ON" or "Buy all OFF", "shopping-bag")
     end
 })
 
--- TAB GEAR (in Game Section)
+-- ===================== TAB GEAR =====================
 local TabGear = SectionGame:Tab({
     Title = "Gear",
     Icon = "wrench"
 })
 
-TabGear:Paragraph({
-    Title = "Gear Shop",
-    Desc = "Buy and equip your gears",
-    Locked = false
-})
-
-local GearsDropdown = TabGear:Dropdown({
+TabGear:Dropdown({
     Title = "Select Gears",
-    Values = {
-        "Frost Grenade",
-        "Frost Blower",
-        "Banana Gun",
-        "Carrot Launcher",
-        "Water Bucket"
-    },
+    Values = {"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"},
     Value = {},
     Multi = true,
-    AllowNone = true,
     Callback = function(selected)
         SelectedGears = selected
-        if type(selected) == "table" then
-            print("Selected Gears: " .. game:GetService("HttpService"):JSONEncode(selected))
-        end
     end
 })
 
 TabGear:Toggle({
     Title = "Auto Buy Selected",
-    Description = "Auto buy selected gears",
     Default = false,
     Callback = function(value)
         AutoBuySelectGear = value
-        print("Auto Buy Selected Gears:", value)
+        Notify("Gears", value and "Auto buy ON" or "Auto buy OFF", "tool")
     end
 })
 
 TabGear:Toggle({
     Title = "Auto Buy All",
-    Description = "Auto buy all gears",
     Default = false,
     Callback = function(value)
         AutoBuyAllGear = value
-        print("Auto Buy All Gears:", value)
+        Notify("Gears", value and "Buy all ON" or "Buy all OFF", "package")
     end
 })
 
--- TAB SELL (in Game Section)
+-- ===================== TAB SELL =====================
 local TabSell = SectionGame:Tab({
     Title = "Sell",
     Icon = "dollar-sign"
 })
 
-TabSell:Paragraph({
-    Title = "Auto Sell Manager",
-    Desc = "Sell items by rarity",
-    Locked = false
-})
+local rarities = {"Common", "Epic", "Legendary", "Godly", "Mythic", "Secret", "Limited"}
+local sellButtons = {}
+
+for _, rarity in ipairs(rarities) do
+    table.insert(sellButtons, {
+        Icon = "trash-2",
+        Title = "Sell " .. rarity,
+        Callback = function()
+            pcall(function()
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(rarity)
+                Notify("Sold", "All " .. rarity .. " items sold!", "dollar-sign")
+            end)
+        end
+    })
+end
 
 TabSell:Paragraph({
-    Title = "Sell Trash Items",
-    Desc = "Quick sell items by rarity",
-    Locked = false,
-    Buttons = {
-        {
-            Icon = "trash-2",
-            Title = "Sell Common",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Common"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Common items!")
-                else
-                    warn("✗ Failed to sell Common items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Epic",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Epic"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Epic items!")
-                else
-                    warn("✗ Failed to sell Epic items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Legendary",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Legendary"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Legendary items!")
-                else
-                    warn("✗ Failed to sell Legendary items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Godly",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Godly"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Godly items!")
-                else
-                    warn("✗ Failed to sell Godly items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Mythic",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Mythic"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Mythic items!")
-                else
-                    warn("✗ Failed to sell Mythic items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Secret",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Secret"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Secret items!")
-                else
-                    warn("✗ Failed to sell Secret items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Limited",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Limited"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Limited items!")
-                else
-                    warn("✗ Failed to sell Limited items")
-                end
-            end
-        }
-    }
+    Title = "Quick Sell",
+    Desc = "Bán items theo rarity",
+    Buttons = sellButtons
 })
 
 TabSell:Paragraph({
     Title = "Sell All Trash",
-    Desc = "Sell multiple rarities at once",
-    Locked = false,
+    Desc = "Bán tất cả items rác",
     Buttons = {
         {
             Icon = "trash",
-            Title = "Sell All Trash",
+            Title = "Sell All",
             Callback = function()
-                local rarities = {"Common", "Epic", "Legendary", "Godly", "Mythic", "Secret", "Limited"}
-                local soldCount = 0
-                
+                local count = 0
                 for _, rarity in ipairs(rarities) do
-                    local success = pcall(function()
-                        local args = {rarity}
-                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                    pcall(function()
+                        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(rarity)
+                        count = count + 1
                     end)
-                    if success then
-                        soldCount = soldCount + 1
-                    end
                     task.wait(0.1)
                 end
-                
-                print("✓ Sold " .. soldCount .. " rarity types!")
+                Notify("Bulk Sell", "Sold " .. count .. " types!", "trash-2")
             end
         }
     }
 })
 
-TabSell:Paragraph({
-    Title = "Sell Plants",
-    Desc = "Auto equip and sell selected plants",
-    Locked = false
-})
-
-local SellPlantsDropdown = TabSell:Dropdown({
+TabSell:Dropdown({
     Title = "Select Plants to Sell",
-    Values = {
-        "Cactus",
-        "Strawberry",
-        "Pumpkin",
-        "Dragon Fruit",
-        "Eggplant",
-        "Watermelon",
-        "Cocotank",
-        "Grape",
-        "Carnivorous Plant",
-        "Mr carrot",
-        "Shroombino",
-        "Tomatrio",
-        "Mango"
-    },
+    Values = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
     Value = {},
     Multi = true,
-    AllowNone = true,
     Callback = function(selected)
         SelectedSellPlants = selected
-        if type(selected) == "table" then
-            print("Selected Plants to Sell: " .. game:GetService("HttpService"):JSONEncode(selected))
-        end
     end
 })
 
 TabSell:Paragraph({
-    Title = "Sell Selected Plants",
-    Desc = "Auto equip then sell the selected plants",
-    Locked = false,
+    Title = "Sell Plants",
     Buttons = {
         {
             Icon = "hand",
-            Title = "Sell Plants",
+            Title = "Sell Selected",
             Callback = function()
-                if type(SelectedSellPlants) == "table" and #SelectedSellPlants > 0 then
-                    local soldCount = 0
-                    
-                    for _, plant in ipairs(SelectedSellPlants) do
-                        local success = pcall(function()
-                            local player = game:GetService("Players").LocalPlayer
-                            local character = player.Character
-                            if character then
-                                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                                if humanoid then
-                                    local plantItem = player.Backpack:FindFirstChild(plant) or character:FindFirstChild(plant)
-                                    if plantItem then
-                                        humanoid:EquipTool(plantItem)
-                                        task.wait(0.2)
-                                        
-                                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
-                                        soldCount = soldCount + 1
-                                        task.wait(0.2)
-                                    else
-                                        warn("✗ Plant not found: " .. plant)
-                                    end
-                                end
-                            end
-                        end)
-                        
-                        if not success then
-                            warn("✗ Failed to sell: " .. plant)
-                        end
-                    end
-                    
-                    print("✓ Sold " .. soldCount .. "/" .. #SelectedSellPlants .. " plants!")
-                else
-                    warn("✗ No plants selected!")
+                if #SelectedSellPlants == 0 then
+                    Notify("Warning", "No plants selected!", "alert-triangle")
+                    return
                 end
+                
+                local sold = 0
+                for _, plant in ipairs(SelectedSellPlants) do
+                    pcall(function()
+                        local char = player.Character
+                        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+                        if humanoid then
+                            local item = player.Backpack:FindFirstChild(plant) or char:FindFirstChild(plant)
+                            if item then
+                                humanoid:EquipTool(item)
+                                task.wait(0.2)
+                                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
+                                sold = sold + 1
+                                task.wait(0.2)
+                            end
+                        end
+                    end)
+                end
+                Notify("Plants Sold", sold .. "/" .. #SelectedSellPlants .. " sold", "check-circle")
             end
         }
     }
 })
 
--- TAB BRAINROT (in Game Section)
+-- ===================== TAB BRAINROT =====================
 local TabBrainrot = SectionGame:Tab({
     Title = "Brainrot",
     Icon = "skull"
 })
 
 TabBrainrot:Paragraph({
-    Title = "Brainrot Manager",
-    Desc = "Equip the best brainrots in your inventory",
-    Locked = false,
+    Title = "Equip Best",
+    Desc = "Trang bị brainrots tốt nhất",
     Buttons = {
         {
             Icon = "zap",
             Title = "Equip Best",
-            Callback = function() 
-                local success, err = pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
+            Callback = function()
+                pcall(function()
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
+                    Notify("Success", "Best brainrots equipped!", "crown")
                 end)
-                if success then
-                    print("✓ Equipped best brainrots!")
-                else
-                    warn("✗ Failed to equip brainrots:", err)
-                end
             end
         }
     }
 })
 
--- TAB MISC (in Settings Section)
-local TabMisc = SectionSettings:Tab({
-    Title = "Misc",
-    Icon = "sliders"
-})
-
-TabMisc:Paragraph({
-    Title = "Miscellaneous Settings",
-    Desc = "Additional features and settings",
-    Locked = false
-})
-
--- Auto Buy Logic
+-- ===================== AUTO BUY LOGIC =====================
 task.spawn(function()
     while task.wait(0.5) do
-        -- Auto Buy Selected Seeds
-        if AutoBuySelectSeed and type(SelectedSeeds) == "table" and #SelectedSeeds > 0 then
+        if AutoBuySelectSeed and #SelectedSeeds > 0 then
             for _, seed in ipairs(SelectedSeeds) do
                 pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
                 end)
                 task.wait(0.1)
             end
         end
         
-        -- Auto Buy All Seeds
         if AutoBuyAllSeeds then
-            local allSeeds = {
-                "Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant",
-                "Watermelon", "Cocotank", "Grape", "Carnivorous Plant",
-                "Mr carrot", "Shroombino", "Tomatrio", "Mango"
-            }
-            for _, seed in ipairs(allSeeds) do
+            for _, seed in ipairs({"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"}) do
                 pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
                 end)
                 task.wait(0.1)
             end
         end
         
-        -- Auto Buy Selected Gears
-        if AutoBuySelectGear and type(SelectedGears) == "table" and #SelectedGears > 0 then
+        if AutoBuySelectGear and #SelectedGears > 0 then
             for _, gear in ipairs(SelectedGears) do
                 pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
                 end)
                 task.wait(0.1)
             end
         end
         
-        -- Auto Buy All Gears
         if AutoBuyAllGear then
-            local allGears = {
-                "Frost Grenade", "Frost Blower", "Banana Gun",
-                "Carrot Launcher", "Water Bucket"
-            }
-            for _, gear in ipairs(allGears) do
+            for _, gear in ipairs({"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"}) do
                 pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
                 end)
                 task.wait(0.1)
             end
@@ -569,55 +345,32 @@ task.spawn(function()
     end
 end)
 
--- Auto Farm Logic
+-- ===================== AUTO FARM LOGIC =====================
 task.spawn(function()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    local humanoid = character:WaitForChild("Humanoid")
-    
-    local plotsFolder = Workspace:WaitForChild("Plots")
-    local myPlot
-    for _, plot in ipairs(plotsFolder:GetChildren()) do
-        if plot:GetAttribute("Owner") == player.Name then
-            myPlot = plot
-            break
-        end
+    local function getChar()
+        return player.Character or player.CharacterAdded:Wait()
     end
-    if not myPlot then return end
     
-    local tierModel
-    local highestTier = 0
-    if myPlot:FindFirstChild("Other") then
-        for _, candidate in ipairs(myPlot.Other:GetChildren()) do
-            local tierNum = candidate.Name:match("^Tier(%d+)$")
-            if tierNum then
-                tierNum = tonumber(tierNum)
-                if tierNum > highestTier and candidate:IsA("Model") then
-                    highestTier = tierNum
-                    tierModel = candidate
-                end
-            end
-        end
-    end
-    if not tierModel then return end
+    local char = getChar()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
     
-    local roadModel = tierModel:FindFirstChild("Road")
-    if not roadModel then return end
-    local roadParts = {}
-    for _, p in ipairs(roadModel:GetDescendants()) do
-        if p:IsA("BasePart") then table.insert(roadParts, p) end
-    end
+    player.CharacterAdded:Connect(function(newChar)
+        char = newChar
+        hrp = newChar:WaitForChild("HumanoidRootPart")
+        hum = newChar:WaitForChild("Humanoid")
+    end)
     
     local Clip = true
-    local NoclipConnection
-    local floatName = "HumanoidRootPart"
+    local NoclipConn
     
     local function noclip()
         Clip = false
-        NoclipConnection = RunService.Stepped:Connect(function()
-            if not Clip and character then
-                for _, v in pairs(character:GetDescendants()) do
-                    if v:IsA("BasePart") and v.CanCollide and v.Name ~= floatName then
+        if NoclipConn then return end
+        NoclipConn = RunService.Stepped:Connect(function()
+            if not Clip and char and char.Parent then
+                for _, v in pairs(char:GetDescendants()) do
+                    if v:IsA("BasePart") and v.CanCollide and v.Name ~= "HumanoidRootPart" then
                         v.CanCollide = false
                     end
                 end
@@ -627,17 +380,17 @@ task.spawn(function()
     
     local function clip()
         Clip = true
-        if NoclipConnection then
-            NoclipConnection:Disconnect()
-            NoclipConnection = nil
+        if NoclipConn then
+            NoclipConn:Disconnect()
+            NoclipConn = nil
         end
     end
     
-    -- Tìm Frost Grenade
-    local function findFrostGrenade()
-        for _, container in ipairs({character, player:WaitForChild("Backpack")}) do
+    local function findWeapon()
+        if not char or not char.Parent then return nil end
+        for _, container in ipairs({char, player.Backpack}) do
             for _, item in ipairs(container:GetChildren()) do
-                if item:IsA("Tool") and string.match(item.Name, "^%[x%d+%] Frost Grenade$") then
+                if item:IsA("Tool") and (item.Name:match("Frost Grenade") or item.Name:lower():match("bat")) then
                     return item
                 end
             end
@@ -645,131 +398,85 @@ task.spawn(function()
         return nil
     end
     
-    -- Tìm item có "bat" trong tên
-    local function findBatItem()
-        for _, container in ipairs({character, player:WaitForChild("Backpack")}) do
-            for _, item in ipairs(container:GetChildren()) do
-                if item:IsA("Tool") and string.lower(item.Name):match("bat") then
-                    return item
-                end
+    local function equipWeapon(weapon)
+        if not weapon or not hum or not hum.Parent then return false end
+        pcall(function()
+            if weapon.Parent == player.Backpack then
+                hum:EquipTool(weapon)
             end
-        end
-        return nil
+        end)
+        task.wait(0.3)
+        return weapon.Parent == char
     end
     
-    -- Equip tool
-    local function equipTool(tool)
-        if not tool then return false end
+    local function attack(brainrot)
+        if not brainrot or not brainrot.Parent or not brainrot.PrimaryPart then return false end
+        local prog = brainrot:GetAttribute("Progress") or 0
+        if prog >= 100 then return false end
         
-        if tool.Parent == player.Backpack then
-            humanoid:EquipTool(tool)
-            task.wait(0.2)
-            return true
-        elseif tool.Parent == character then
-            return true
-        end
-        return false
+        local weapon = findWeapon()
+        if not weapon then return false end
+        
+        if not equipWeapon(weapon) then return false end
+        
+        pcall(function()
+            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseGear"):FireServer(weapon, brainrot.PrimaryPart.Position)
+        end)
+        return true
     end
     
-    -- Sử dụng Frost Grenade hoặc Bat item
-    local function attackBrainrot(brainrot)
-        if not brainrot or not brainrot.Parent then return false end
-        
-        local progress = brainrot:GetAttribute("Progress") or 0
-        if progress >= 100 then return false end
-        
-        -- Ưu tiên Frost Grenade
-        local weapon = findFrostGrenade()
-        if not weapon then
-            -- Nếu không có Frost Grenade thì dùng Bat item
-            weapon = findBatItem()
-        end
-        
-        if not weapon then 
-            warn("✗ Không tìm thấy vũ khí (Frost Grenade hoặc Bat)!")
-            return false
-        end
-        
-        -- Equip và sử dụng
-        if equipTool(weapon) then
-            local success = pcall(function()
-                if weapon.Name:match("Frost Grenade") then
-                    -- Dùng Frost Grenade
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseGear"):FireServer(
-                        weapon,
-                        brainrot.PrimaryPart.Position
-                    )
-                else
-                    -- Dùng Bat item
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseGear"):FireServer(
-                        weapon,
-                        brainrot.PrimaryPart.Position
-                    )
-                end
-            end)
-            
-            if success then
-                print("✓ Đã tấn công bằng: " .. weapon.Name)
-                return true
-            end
-        end
-        
-        return false
-    end
+    Notify("Auto Farm", "System ready!", "check")
     
-    -- Main Auto Farm Loop
-    while task.wait(0.5) do
-        if not AutoFarmEnabled then continue end
+    while true do
+        task.wait(0.5)
         
-        -- Tìm brainrots trong plots
+        if not AutoFarmEnabled then
+            clip()
+            continue
+        end
+        
+        if not char or not char.Parent or not hrp or not hrp.Parent then
+            char = getChar()
+            hrp = char:WaitForChild("HumanoidRootPart")
+            hum = char:WaitForChild("Humanoid")
+            task.wait(1)
+            continue
+        end
+        
         local brainrotsFolder = Workspace:FindFirstChild("Brainrots")
         if not brainrotsFolder then continue end
         
-        local targetBrainrot = nil
-        local targetRarity = nil
+        local target = nil
         
         for _, brainrot in ipairs(brainrotsFolder:GetChildren()) do
             if brainrot:IsA("Model") and brainrot.PrimaryPart then
                 local rarity = brainrot:GetAttribute("Rarity")
-                local progress = brainrot:GetAttribute("Progress") or 0
+                local prog = brainrot:GetAttribute("Progress") or 0
                 
-                -- Check nếu rarity nằm trong danh sách đã chọn
-                if rarity and progress < 100 and type(SelectedRarities) == "table" then
-                    for _, selectedRarity in ipairs(SelectedRarities) do
-                        if rarity == selectedRarity then
-                            targetBrainrot = brainrot
-                            targetRarity = rarity
+                if rarity and prog < 100 then
+                    for _, selRarity in ipairs(SelectedRarities) do
+                        if rarity == selRarity then
+                            target = brainrot
                             break
                         end
                     end
                 end
                 
-                if targetBrainrot then break end
+                if target then break end
             end
         end
         
-        -- Nếu tìm thấy target
-        if targetBrainrot then
+        if target and target.PrimaryPart then
             noclip()
-            
-            -- Teleport đến brainrot
-            local targetPos = targetBrainrot.PrimaryPart.Position
-            hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+            local pos = target.PrimaryPart.Position
+            hrp.CFrame = CFrame.new(pos + Vector3.new(0, 7, 0))
+            task.wait(0.4)
+            attack(target)
             task.wait(0.3)
-            
-            -- Tấn công brainrot
-            attackBrainrot(targetBrainrot)
-            
-            print("🎯 Đang farm: " .. targetRarity .. " brainrot")
-            task.wait(0.5)
-            
-            clip()
         else
-            -- Về vị trí an toàn nếu không có target
-            if #roadParts > 0 then
-                local safePart = roadParts[math.random(1, #roadParts)]
-                hrp.CFrame = safePart.CFrame + Vector3.new(0, 3, 0)
-            end
+            clip()
         end
     end
 end)
+
+Notify("Lowet Hub", "Loaded successfully!", "check-circle")
