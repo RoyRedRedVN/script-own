@@ -24,7 +24,7 @@ local Window = WindUI:CreateWindow({
 -- Section Main for Home
 local SectionMain = Window:Section({
     Title = "Main",
-    Icon = "home",
+    Icon = "house",
     Opened = true,
 })
 
