@@ -1,1 +1,254 @@
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
+WindUI:AddTheme({
+    Name = "POWER",
+    
+    Accent = Color3.fromHex("#18181b"),
+    Dialog = Color3.fromHex("#161616"),
+    Outline = Color3.fromHex("#FFFFFF"),
+    Text = Color3.fromHex("#FFFFFF"),
+    Placeholder = Color3.fromHex("#7a7a7a"),
+    Background = Color3.fromHex("#101010"),
+    Button = Color3.fromHex("#52525b"),
+    Icon = Color3.fromHex("#a1a1aa")
+})
+
+WindUI:SetTheme("POWER")
+
+local Window = WindUI:CreateWindow({
+    Title = "Lowet Hub",
+    Icon = "door-open",
+    Author = "by RedMod",
+})
+
+-- Variables
+local SelectedSeeds = {}
+local SelectedGears = {}
+local AutoBuySelectSeed = false
+local AutoBuyAllSeeds = false
+local AutoBuySelectGear = false
+local AutoBuyAllGear = false
+
+-- TAB HOME
+local TabHome = Window:Tab({
+    Title = "Home",
+    Icon = "home"
+})
+
+TabHome:Paragraph({
+    Title = "Welcome to Lowet Hub",
+    Desc = "Join our Discord community for updates and support!",
+    Locked = false
+})
+
+TabHome:Paragraph({
+    Title = "Discord Server",
+    Desc = "https://discord.gg/VyQfTtDJnY",
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "copy",
+            Title = "Copy Link",
+            Callback = function()
+                setclipboard("https://discord.gg/VyQfTtDJnY")
+                print("✓ Discord link copied to clipboard!")
+            end
+        }
+    }
+})
+
+-- TAB SEEDS
+local TabSeeds = Window:Tab({
+    Title = "Seeds",
+    Icon = "sprout"
+})
+
+TabSeeds:Paragraph({
+    Title = "Seeds Manager",
+    Desc = "Buy and manage your seeds",
+    Locked = false
+})
+
+local SeedsDropdown = TabSeeds:Dropdown({
+    Title = "Select Seeds",
+    Description = "Choose your seed types",
+    Options = {
+        "Cactus",
+        "Strawberry",
+        "Pumpkin",
+        "Dragon Fruit",
+        "Eggplant",
+        "Watermelon",
+        "Cocotank",
+        "Grape",
+        "Carnivorous Plant",
+        "Mr carrot",
+        "Shroombino",
+        "Tomatrio",
+        "Mango"
+    },
+    Multi = true,
+    Search = true,
+    Clearable = true,
+    Callback = function(selected)
+        SelectedSeeds = selected
+        if type(selected) == "table" then
+            print("Selected Seeds:", #selected > 0 and table.concat(selected, ", ") or "None")
+        end
+    end
+})
+
+TabSeeds:Toggle({
+    Title = "Auto Buy Selected",
+    Description = "Auto buy selected seeds",
+    Default = false,
+    Callback = function(value)
+        AutoBuySelectSeed = value
+        print("Auto Buy Selected Seeds:", value)
+    end
+})
+
+TabSeeds:Toggle({
+    Title = "Auto Buy All",
+    Description = "Auto buy all seeds",
+    Default = false,
+    Callback = function(value)
+        AutoBuyAllSeeds = value
+        print("Auto Buy All Seeds:", value)
+    end
+})
+
+-- TAB GEAR
+local TabGear = Window:Tab({
+    Title = "Gear",
+    Icon = "wrench"
+})
+
+TabGear:Paragraph({
+    Title = "Gear Shop",
+    Desc = "Buy and equip your gears",
+    Locked = false
+})
+
+local GearsDropdown = TabGear:Dropdown({
+    Title = "Select Gears",
+    Description = "Choose your gears",
+    Options = {
+        "Frost Grenade",
+        "Frost Blower",
+        "Banana Gun",
+        "Carrot Launcher",
+        "Water Bucket"
+    },
+    Multi = true,
+    Search = true,
+    Clearable = true,
+    Callback = function(selected)
+        SelectedGears = selected
+        if type(selected) == "table" then
+            print("Selected Gears:", #selected > 0 and table.concat(selected, ", ") or "None")
+        end
+    end
+})
+
+TabGear:Toggle({
+    Title = "Auto Buy Selected",
+    Description = "Auto buy selected gears",
+    Default = false,
+    Callback = function(value)
+        AutoBuySelectGear = value
+        print("Auto Buy Selected Gears:", value)
+    end
+})
+
+TabGear:Toggle({
+    Title = "Auto Buy All",
+    Description = "Auto buy all gears",
+    Default = false,
+    Callback = function(value)
+        AutoBuyAllGear = value
+        print("Auto Buy All Gears:", value)
+    end
+})
+
+-- TAB BRAINROT
+local TabBrainrot = Window:Tab({
+    Title = "Brainrot",
+    Icon = "skull"
+})
+
+TabBrainrot:Paragraph({
+    Title = "Brainrot Manager",
+    Desc = "Equip the best brainrots in your inventory",
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "zap",
+            Title = "Equip Best",
+            Callback = function() 
+                local success, err = pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
+                end)
+                if success then
+                    print("✓ Equipped best brainrots!")
+                else
+                    warn("✗ Failed to equip brainrots:", err)
+                end
+            end
+        }
+    }
+})
+
+-- Auto Buy Logic
+task.spawn(function()
+    while task.wait(0.5) do
+        -- Auto Buy Selected Seeds
+        if AutoBuySelectSeed and type(SelectedSeeds) == "table" and #SelectedSeeds > 0 then
+            for _, seed in ipairs(SelectedSeeds) do
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
+                end)
+                task.wait(0.1)
+            end
+        end
+        
+        -- Auto Buy All Seeds
+        if AutoBuyAllSeeds then
+            local allSeeds = {
+                "Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant",
+                "Watermelon", "Cocotank", "Grape", "Carnivorous Plant",
+                "Mr carrot", "Shroombino", "Tomatrio", "Mango"
+            }
+            for _, seed in ipairs(allSeeds) do
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
+                end)
+                task.wait(0.1)
+            end
+        end
+        
+        -- Auto Buy Selected Gears
+        if AutoBuySelectGear and type(SelectedGears) == "table" and #SelectedGears > 0 then
+            for _, gear in ipairs(SelectedGears) do
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
+                end)
+                task.wait(0.1)
+            end
+        end
+        
+        -- Auto Buy All Gears
+        if AutoBuyAllGear then
+            local allGears = {
+                "Frost Grenade", "Frost Blower", "Banana Gun",
+                "Carrot Launcher", "Water Bucket"
+            }
+            for _, gear in ipairs(allGears) do
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
+                end)
+                task.wait(0.1)
+            end
+        end
+    end
+end)
