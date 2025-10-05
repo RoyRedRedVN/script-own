@@ -32,7 +32,7 @@ local AutoBuyAllGear = false
 -- TAB HOME
 local TabHome = Window:Tab({
     Title = "Home",
-    Icon = "home"
+    Icon = "house"
 })
 
 TabHome:Paragraph({
@@ -167,6 +167,100 @@ TabGear:Toggle({
         AutoBuyAllGear = value
         print("Auto Buy All Gears:", value)
     end
+})
+
+-- TAB SELL
+local TabSell = Window:Tab({
+    Title = "Sell",
+    Icon = "dollar-sign"
+})
+
+TabSell:Paragraph({
+    Title = "Auto Sell Manager",
+    Desc = "Sell items by rarity",
+    Locked = false
+})
+
+TabSell:Paragraph({
+    Title = "Sell Trash Items",
+    Desc = "Quick sell common, epic, and legendary items",
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "trash-2",
+            Title = "Sell Common",
+            Callback = function()
+                local success = pcall(function()
+                    local args = {"Common"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                end)
+                if success then
+                    print("✓ Sold all Common items!")
+                else
+                    warn("✗ Failed to sell Common items")
+                end
+            end
+        },
+        {
+            Icon = "trash-2",
+            Title = "Sell Epic",
+            Callback = function()
+                local success = pcall(function()
+                    local args = {"Epic"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                end)
+                if success then
+                    print("✓ Sold all Epic items!")
+                else
+                    warn("✗ Failed to sell Epic items")
+                end
+            end
+        },
+        {
+            Icon = "trash-2",
+            Title = "Sell Legendary",
+            Callback = function()
+                local success = pcall(function()
+                    local args = {"Legendary"}
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                end)
+                if success then
+                    print("✓ Sold all Legendary items!")
+                else
+                    warn("✗ Failed to sell Legendary items")
+                end
+            end
+        }
+    }
+})
+
+TabSell:Paragraph({
+    Title = "Sell All Trash",
+    Desc = "Sell Common + Epic + Legendary at once",
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "trash",
+            Title = "Sell All Trash",
+            Callback = function()
+                local rarities = {"Common", "Epic", "Legendary"}
+                local soldCount = 0
+                
+                for _, rarity in ipairs(rarities) do
+                    local success = pcall(function()
+                        local args = {rarity}
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
+                    end)
+                    if success then
+                        soldCount = soldCount + 1
+                    end
+                    task.wait(0.1)
+                end
+                
+                print("✓ Sold " .. soldCount .. " rarity types!")
+            end
+        }
+    }
 })
 
 -- TAB BRAINROT
