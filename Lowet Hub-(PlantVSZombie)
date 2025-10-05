@@ -1,3 +1,4 @@
+
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 WindUI:AddTheme({
@@ -20,7 +21,7 @@ local Window = WindUI:CreateWindow({
     Author = "by RedMod",
 })
 
--- Tạo function thông báo đẹp thay vì dùng print thông thường
+-- Function thông báo đẹp
 local function Notify(title, content, icon)
     WindUI:Notify({
         Title = title,
@@ -30,7 +31,20 @@ local function Notify(title, content, icon)
     })
 end
 
--- Các biến toàn cục để lưu trữ cài đặt
+-- ===================== SERVICES & VARIABLES =====================
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
+local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
+
+local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+local useItemRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseItem")
+
+-- Biến cài đặt
 local SelectedSeeds = {}
 local SelectedGears = {}
 local SelectedSellPlants = {}
@@ -41,20 +55,219 @@ local AutoBuySelectGear = false
 local AutoBuyAllGear = false
 local AutoFarmEnabled = false
 
--- Lấy các service cần thiết từ Roblox
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
+-- ===================== HELPER FUNCTIONS =====================
+local function getStock(text)
+    local amount = text:match("x(%d+)")
+    return tonumber(amount) or 0
+end
 
--- ===================== TAB HOME =====================
+local function getItemList(scrollFrame)
+    local items = {}
+    for _, itemFrame in ipairs(scrollFrame:GetChildren()) do
+        if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") then
+            table.insert(items, itemFrame.Name)
+        end
+    end
+    return items
+end
+
+local function buyItem(itemName, amount, isSeed)
+    local arg2 = isSeed and "\b" or "\026"
+    for i = 1, amount do
+        pcall(function()
+            local args = {{itemName, arg2}}
+            dataRemoteEvent:FireServer(unpack(args))
+        end)
+    end
+end
+
+-- ===================== CHARACTER & PLOT SETUP =====================
+local function getCharacter()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local character = getCharacter()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    hrp = newChar:WaitForChild("HumanoidRootPart")
+    humanoid = newChar:WaitForChild("Humanoid")
+end)
+
+-- Tìm plot của player
+local function getMyPlot()
+    local plotsFolder = Workspace:WaitForChild("Plots")
+    for _, plot in ipairs(plotsFolder:GetChildren()) do
+        if plot:GetAttribute("Owner") == player.Name then
+            return plot
+        end
+    end
+    return nil
+end
+
+local myPlot = getMyPlot()
+if not myPlot then 
+    Notify("Error", "Could not find your plot!", "alert-circle")
+    return 
+end
+
+-- Tìm tier cao nhất và road parts
+local function getRoadParts()
+    local tierModel
+    local highestTier = 0
+    
+    if myPlot:FindFirstChild("Other") then
+        for _, candidate in ipairs(myPlot.Other:GetChildren()) do
+            local tierNum = tonumber(candidate.Name:match("^Tier(%d+)$"))
+            if tierNum and tierNum > highestTier and candidate:IsA("Model") then
+                highestTier = tierNum
+                tierModel = candidate
+            end
+        end
+    end
+    
+    if not tierModel then return {} end
+    
+    local roadModel = tierModel:FindFirstChild("Road")
+    if not roadModel then return {} end
+    
+    local parts = {}
+    for _, p in ipairs(roadModel:GetDescendants()) do
+        if p:IsA("BasePart") then 
+            table.insert(parts, p) 
+        end
+    end
+    return parts
+end
+
+local roadParts = getRoadParts()
+
+-- ===================== NOCLIP FUNCTIONS =====================
+local Clip = true
+local NoclipConnection
+
+local function noclip()
+    Clip = false
+    if NoclipConnection then return end
+    
+    NoclipConnection = RunService.Stepped:Connect(function()
+        if not Clip and character and character.Parent then
+            for _, v in pairs(character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide and v.Name ~= "HumanoidRootPart" then
+                    v.CanCollide = false
+                end
+            end
+        end
+    end)
+end
+
+local function clip()
+    Clip = true
+    if NoclipConnection then
+        NoclipConnection:Disconnect()
+        NoclipConnection = nil
+    end
+end
+
+-- ===================== WEAPON FUNCTIONS =====================
+local function findFrostGrenade()
+    if not character or not character.Parent then return nil end
+    
+    for _, container in ipairs({character, player.Backpack}) do
+        for _, item in ipairs(container:GetChildren()) do
+            if item:IsA("Tool") and item.Name:match("Frost Grenade") then
+                return item
+            end
+        end
+    end
+    return nil
+end
+
+local function findBatItem()
+    if not character or not character.Parent then return nil end
+    
+    for _, container in ipairs({character, player.Backpack}) do
+        for _, item in ipairs(container:GetChildren()) do
+            if item:IsA("Tool") and item.Name:lower():match("bat") then
+                return item
+            end
+        end
+    end
+    return nil
+end
+
+local function fireFrostGrenade(brainrot)
+    if not brainrot or not brainrot.Parent then return end
+    
+    local progress = brainrot:GetAttribute("Progress") or 0
+    if progress < 0.6 then return end
+    
+    local tool = findFrostGrenade() or findBatItem()
+    if not tool then return end
+    
+    local bp = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
+    if not bp then return end
+    
+    pcall(function()
+        humanoid:EquipTool(tool)
+        task.wait(0.1)
+        
+        local args = {{
+            Toggle = true,
+            Tool = tool,
+            Time = 0.5,
+            Pos = Vector3.new(bp.Position.X, bp.Position.Y, bp.Position.Z)
+        }}
+        useItemRemote:FireServer(unpack(args))
+    end)
+end
+
+-- ===================== BRAINROT DETECTION =====================
+local DETECT_RADIUS = 20
+
+local function findTargetBrainrot()
+    local brainrotsFolder = Workspace:FindFirstChild("ScriptedMap")
+    if not brainrotsFolder then return nil end
+    
+    brainrotsFolder = brainrotsFolder:FindFirstChild("Brainrots")
+    if not brainrotsFolder then return nil end
+    
+    for _, brainrot in ipairs(brainrotsFolder:GetChildren()) do
+        if brainrot:IsA("Model") then
+            local rarity = brainrot:GetAttribute("Rarity")
+            
+            if rarity and table.find(SelectedRarities, rarity) then
+                local primary = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
+                
+                if primary then
+                    for _, roadPart in ipairs(roadParts) do
+                        if (primary.Position - roadPart.Position).Magnitude <= DETECT_RADIUS then
+                            return brainrot
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- ===================== UI SECTIONS =====================
 local SectionMain = Window:Section({
     Title = "Main",
     Icon = "house",
     Opened = true,
 })
 
+local SectionGame = Window:Section({
+    Title = "Game",
+    Icon = "gamepad-2",
+    Opened = true,
+})
+
+-- ===================== TAB HOME =====================
 local TabHome = SectionMain:Tab({
     Title = "Home",
     Icon = "house"
@@ -77,12 +290,6 @@ TabHome:Paragraph({
 })
 
 -- ===================== TAB AUTO FARM =====================
-local SectionGame = Window:Section({
-    Title = "Game",
-    Icon = "gamepad-2",
-    Opened = true,
-})
-
 local TabAutoFarm = SectionGame:Tab({
     Title = "Auto Farm",
     Icon = "zap"
@@ -90,12 +297,12 @@ local TabAutoFarm = SectionGame:Tab({
 
 TabAutoFarm:Paragraph({
     Title = "Auto Farm Brainrots",
-    Desc = "Farm brainrots với Frost Grenade hoặc Bat",
+    Desc = "Tự động farm brainrots với vũ khí",
     Locked = false
 })
 
 TabAutoFarm:Dropdown({
-    Title = "Select Rarities to Farm",
+    Title = "Select Rarities",
     Values = {"Rare", "Epic", "Legendary", "Mythic", "Godly", "Secret", "Limited"},
     Value = {"Secret", "Limited"},
     Multi = true,
@@ -114,7 +321,7 @@ TabAutoFarm:Toggle({
     Default = false,
     Callback = function(value)
         AutoFarmEnabled = value
-        Notify("Auto Farm", value and "Enabled" or "Disabled", value and "zap" or "x")
+        Notify("Auto Farm", value and "Enabled ✓" or "Disabled ✗", value and "zap" or "x")
     end
 })
 
@@ -124,13 +331,18 @@ local TabSeeds = SectionGame:Tab({
     Icon = "sprout"
 })
 
+local allSeedsList = getItemList(seedsFrame)
+
 TabSeeds:Dropdown({
     Title = "Select Seeds",
-    Values = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
+    Values = allSeedsList,
     Value = {},
     Multi = true,
     Callback = function(selected)
         SelectedSeeds = selected
+        if #selected > 0 then
+            Notify("Seeds", #selected .. " seeds selected", "sprout")
+        end
     end
 })
 
@@ -144,7 +356,7 @@ TabSeeds:Toggle({
 })
 
 TabSeeds:Toggle({
-    Title = "Auto Buy All",
+    Title = "Auto Buy All Seeds",
     Default = false,
     Callback = function(value)
         AutoBuyAllSeeds = value
@@ -158,13 +370,18 @@ local TabGear = SectionGame:Tab({
     Icon = "wrench"
 })
 
+local allGearsList = getItemList(gearsFrame)
+
 TabGear:Dropdown({
     Title = "Select Gears",
-    Values = {"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"},
+    Values = allGearsList,
     Value = {},
     Multi = true,
     Callback = function(selected)
         SelectedGears = selected
+        if #selected > 0 then
+            Notify("Gears", #selected .. " gears selected", "wrench")
+        end
     end
 })
 
@@ -178,7 +395,7 @@ TabGear:Toggle({
 })
 
 TabGear:Toggle({
-    Title = "Auto Buy All",
+    Title = "Auto Buy All Gears",
     Default = false,
     Callback = function(value)
         AutoBuyAllGear = value
@@ -216,7 +433,7 @@ TabSell:Paragraph({
 
 TabSell:Paragraph({
     Title = "Sell All Trash",
-    Desc = "Bán tất cả items rác",
+    Desc = "Bán tất cả items rác cùng lúc",
     Buttons = {
         {
             Icon = "trash",
@@ -238,7 +455,7 @@ TabSell:Paragraph({
 
 TabSell:Dropdown({
     Title = "Select Plants to Sell",
-    Values = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
+    Values = allSeedsList,
     Value = {},
     Multi = true,
     Callback = function(selected)
@@ -262,11 +479,11 @@ TabSell:Paragraph({
                 for _, plant in ipairs(SelectedSellPlants) do
                     pcall(function()
                         local char = player.Character
-                        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-                        if humanoid then
+                        local hum = char and char:FindFirstChildOfClass("Humanoid")
+                        if hum then
                             local item = player.Backpack:FindFirstChild(plant) or char:FindFirstChild(plant)
                             if item then
-                                humanoid:EquipTool(item)
+                                hum:EquipTool(item)
                                 task.wait(0.2)
                                 ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
                                 sold = sold + 1
@@ -306,40 +523,54 @@ TabBrainrot:Paragraph({
 
 -- ===================== AUTO BUY LOGIC =====================
 task.spawn(function()
-    while task.wait(0.5) do
+    while task.wait(1) do
+        -- Auto Buy Selected Seeds
         if AutoBuySelectSeed and #SelectedSeeds > 0 then
-            for _, seed in ipairs(SelectedSeeds) do
-                pcall(function()
-                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
-                end)
-                task.wait(0.1)
+            for _, seedName in ipairs(SelectedSeeds) do
+                local seedFrame = seedsFrame:FindFirstChild(seedName)
+                if seedFrame and seedFrame:FindFirstChild("Stock") then
+                    local stock = getStock(seedFrame.Stock.Text)
+                    if stock > 0 then
+                        buyItem(seedName, stock, true)
+                    end
+                end
             end
         end
         
+        -- Auto Buy All Seeds
         if AutoBuyAllSeeds then
-            for _, seed in ipairs({"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"}) do
-                pcall(function()
-                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
-                end)
-                task.wait(0.1)
+            for _, seedFrame in ipairs(seedsFrame:GetChildren()) do
+                if seedFrame:IsA("Frame") and seedFrame:FindFirstChild("Stock") then
+                    local stock = getStock(seedFrame.Stock.Text)
+                    if stock > 0 then
+                        buyItem(seedFrame.Name, stock, true)
+                    end
+                end
             end
         end
         
+        -- Auto Buy Selected Gears
         if AutoBuySelectGear and #SelectedGears > 0 then
-            for _, gear in ipairs(SelectedGears) do
-                pcall(function()
-                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
-                end)
-                task.wait(0.1)
+            for _, gearName in ipairs(SelectedGears) do
+                local gearFrame = gearsFrame:FindFirstChild(gearName)
+                if gearFrame and gearFrame:FindFirstChild("Stock") then
+                    local stock = getStock(gearFrame.Stock.Text)
+                    if stock > 0 then
+                        buyItem(gearName, stock, false)
+                    end
+                end
             end
         end
         
+        -- Auto Buy All Gears
         if AutoBuyAllGear then
-            for _, gear in ipairs({"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"}) do
-                pcall(function()
-                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
-                end)
-                task.wait(0.1)
+            for _, gearFrame in ipairs(gearsFrame:GetChildren()) do
+                if gearFrame:IsA("Frame") and gearFrame:FindFirstChild("Stock") then
+                    local stock = getStock(gearFrame.Stock.Text)
+                    if stock > 0 then
+                        buyItem(gearFrame.Name, stock, false)
+                    end
+                end
             end
         end
     end
@@ -347,136 +578,74 @@ end)
 
 -- ===================== AUTO FARM LOGIC =====================
 task.spawn(function()
-    local function getChar()
-        return player.Character or player.CharacterAdded:Wait()
-    end
-    
-    local char = getChar()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local hum = char:WaitForChild("Humanoid")
-    
-    player.CharacterAdded:Connect(function(newChar)
-        char = newChar
-        hrp = newChar:WaitForChild("HumanoidRootPart")
-        hum = newChar:WaitForChild("Humanoid")
-    end)
-    
-    local Clip = true
-    local NoclipConn
-    
-    local function noclip()
-        Clip = false
-        if NoclipConn then return end
-        NoclipConn = RunService.Stepped:Connect(function()
-            if not Clip and char and char.Parent then
-                for _, v in pairs(char:GetDescendants()) do
-                    if v:IsA("BasePart") and v.CanCollide and v.Name ~= "HumanoidRootPart" then
-                        v.CanCollide = false
-                    end
-                end
-            end
-        end)
-    end
-    
-    local function clip()
-        Clip = true
-        if NoclipConn then
-            NoclipConn:Disconnect()
-            NoclipConn = nil
-        end
-    end
-    
-    local function findWeapon()
-        if not char or not char.Parent then return nil end
-        for _, container in ipairs({char, player.Backpack}) do
-            for _, item in ipairs(container:GetChildren()) do
-                if item:IsA("Tool") and (item.Name:match("Frost Grenade") or item.Name:lower():match("bat")) then
-                    return item
-                end
-            end
-        end
-        return nil
-    end
-    
-    local function equipWeapon(weapon)
-        if not weapon or not hum or not hum.Parent then return false end
-        pcall(function()
-            if weapon.Parent == player.Backpack then
-                hum:EquipTool(weapon)
-            end
-        end)
-        task.wait(0.3)
-        return weapon.Parent == char
-    end
-    
-    local function attack(brainrot)
-        if not brainrot or not brainrot.Parent or not brainrot.PrimaryPart then return false end
-        local prog = brainrot:GetAttribute("Progress") or 0
-        if prog >= 100 then return false end
-        
-        local weapon = findWeapon()
-        if not weapon then return false end
-        
-        if not equipWeapon(weapon) then return false end
-        
-        pcall(function()
-            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseGear"):FireServer(weapon, brainrot.PrimaryPart.Position)
-        end)
-        return true
-    end
+    local FIRE_INTERVAL = 2
     
     Notify("Auto Farm", "System ready!", "check")
     
     while true do
-        task.wait(0.5)
-        
-        if not AutoFarmEnabled then
-            clip()
-            continue
-        end
-        
-        if not char or not char.Parent or not hrp or not hrp.Parent then
-            char = getChar()
-            hrp = char:WaitForChild("HumanoidRootPart")
-            hum = char:WaitForChild("Humanoid")
-            task.wait(1)
-            continue
-        end
-        
-        local brainrotsFolder = Workspace:FindFirstChild("Brainrots")
-        if not brainrotsFolder then continue end
-        
-        local target = nil
-        
-        for _, brainrot in ipairs(brainrotsFolder:GetChildren()) do
-            if brainrot:IsA("Model") and brainrot.PrimaryPart then
-                local rarity = brainrot:GetAttribute("Rarity")
-                local prog = brainrot:GetAttribute("Progress") or 0
+        if AutoFarmEnabled then
+            local targetBrainrot = findTargetBrainrot()
+            
+            if targetBrainrot then
+                local targetPart = targetBrainrot.PrimaryPart or targetBrainrot:FindFirstChildWhichIsA("BasePart")
                 
-                if rarity and prog < 100 then
-                    for _, selRarity in ipairs(SelectedRarities) do
-                        if rarity == selRarity then
-                            target = brainrot
-                            break
+                if targetPart then
+                    noclip()
+                    
+                    -- Teleport đến brainrot
+                    hrp.CFrame = CFrame.new(targetPart.Position)
+                    
+                    -- Tạo BodyPosition để giữ character cố định
+                    local bodyPos = Instance.new("BodyPosition")
+                    bodyPos.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+                    bodyPos.P = 5000
+                    bodyPos.D = 100
+                    bodyPos.Position = hrp.Position
+                    bodyPos.Parent = hrp
+                    
+                    local lastFire = 0
+                    
+                    -- Vòng lặp tấn công brainrot
+                    while targetBrainrot.Parent and AutoFarmEnabled do
+                        bodyPos.Position = targetPart.Position
+                        
+                        local progress = targetBrainrot:GetAttribute("Progress") or 0
+                        
+                        -- Equip vũ khí khi progress > 60%
+                        if progress > 0.6 then
+                            local tool = findFrostGrenade() or findBatItem()
+                            if tool then
+                                pcall(function()
+                                    humanoid:EquipTool(tool)
+                                end)
+                            end
                         end
+                        
+                        -- Bắn với interval
+                        local now = tick()
+                        if now - lastFire >= FIRE_INTERVAL then
+                            fireFrostGrenade(targetBrainrot)
+                            lastFire = now
+                        end
+                        
+                        task.wait(0.03)
                     end
+                    
+                    -- Dọn dẹp
+                    humanoid:UnequipTools()
+                    bodyPos:Destroy()
+                    clip()
                 end
-                
-                if target then break end
+            else
+                task.wait(1)
             end
-        end
-        
-        if target and target.PrimaryPart then
-            noclip()
-            local pos = target.PrimaryPart.Position
-            hrp.CFrame = CFrame.new(pos + Vector3.new(0, 7, 0))
-            task.wait(0.4)
-            attack(target)
-            task.wait(0.3)
         else
             clip()
+            task.wait(1)
         end
     end
 end)
 
-Notify("Lowet Hub", "Loaded successfully!", "check-circle")
+Notify("Lowet Hub", "Loaded successfully! 🔥", "check-circle")
+```
+
