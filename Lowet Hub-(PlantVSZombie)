@@ -51,6 +51,7 @@ local AutoBuyAllSeeds = false
 local AutoBuySelectGear = false
 local AutoBuyAllGear = false
 local AutoFarmEnabled = false
+local AutoBatEnabled = false
 
 -- Services
 local Players = game:GetService("Players")
@@ -123,6 +124,16 @@ TabAutoFarm:Toggle({
     Callback = function(value)
         AutoFarmEnabled = value
         print("Auto Farm:", value)
+    end
+})
+
+TabAutoFarm:Toggle({
+    Title = "Auto Bat Clicker",
+    Description = "Automatically click bat weapons",
+    Default = false,
+    Callback = function(value)
+        AutoBatEnabled = value
+        print("Auto Bat Clicker:", value)
     end
 })
 
@@ -731,6 +742,64 @@ task.spawn(function()
             end
         else
             task.wait(1)
+        end
+    end
+end)
+
+-- Auto Bat Clicker Logic
+task.spawn(function()
+    local batNames = {
+        ["Basic Bat"] = true,
+        ["Leather Grip Bat"] = true,
+        ["Iron Plate Bat"] = true,
+        ["Iron Core Bat"] = true,
+        ["Aluminum Bat"] = true
+    }
+    
+    local function hasBat()
+        local character = player.Character
+        if not character then return nil end
+        
+        local backpack = player.Backpack
+        
+        -- Check in Backpack
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if batNames[tool.Name] then
+                return tool
+            end
+        end
+        
+        -- Check in Character (equipped)
+        for _, tool in ipairs(character:GetChildren()) do
+            if batNames[tool.Name] then
+                return tool
+            end
+        end
+        
+        return nil
+    end
+    
+    while true do
+        if AutoBatEnabled then
+            local bat = hasBat()
+            if bat then
+                local character = player.Character
+                if character then
+                    -- If bat is in backpack, move to character (equip)
+                    if bat.Parent == player.Backpack then
+                        bat.Parent = character
+                        task.wait(0.1)
+                    end
+                    
+                    -- Activate the bat (simulate click)
+                    pcall(function()
+                        bat:Activate()
+                    end)
+                end
+            end
+            task.wait(0.05) -- Fast clicking, adjust delay if needed
+        else
+            task.wait(0.5)
         end
     end
 end)
