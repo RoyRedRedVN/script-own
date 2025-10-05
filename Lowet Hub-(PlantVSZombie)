@@ -21,6 +21,27 @@ local Window = WindUI:CreateWindow({
     Author = "by RedMod",
 })
 
+-- Section Main for Home
+local SectionMain = Window:Section({
+    Title = "Main",
+    Icon = "home",
+    Opened = true,
+})
+
+-- Section Game for gameplay features
+local SectionGame = Window:Section({
+    Title = "Game",
+    Icon = "gamepad-2",
+    Opened = true,
+})
+
+-- Section Settings for misc
+local SectionSettings = Window:Section({
+    Title = "Settings",
+    Icon = "settings",
+    Opened = true,
+})
+
 -- Variables
 local SelectedSeeds = {}
 local SelectedGears = {}
@@ -30,8 +51,8 @@ local AutoBuyAllSeeds = false
 local AutoBuySelectGear = false
 local AutoBuyAllGear = false
 
--- TAB HOME
-local TabHome = Window:Tab({
+-- TAB HOME (in Main Section)
+local TabHome = SectionMain:Tab({
     Title = "Home",
     Icon = "house"
 })
@@ -58,8 +79,8 @@ TabHome:Paragraph({
     }
 })
 
--- TAB SEEDS
-local TabSeeds = Window:Tab({
+-- TAB SEEDS (in Game Section)
+local TabSeeds = SectionGame:Tab({
     Title = "Seeds",
     Icon = "sprout"
 })
@@ -118,8 +139,8 @@ TabSeeds:Toggle({
     end
 })
 
--- TAB GEAR
-local TabGear = Window:Tab({
+-- TAB GEAR (in Game Section)
+local TabGear = SectionGame:Tab({
     Title = "Gear",
     Icon = "wrench"
 })
@@ -170,8 +191,8 @@ TabGear:Toggle({
     end
 })
 
--- TAB SELL
-local TabSell = Window:Tab({
+-- TAB SELL (in Game Section)
+local TabSell = SectionGame:Tab({
     Title = "Sell",
     Icon = "dollar-sign"
 })
@@ -409,8 +430,8 @@ TabSell:Paragraph({
     }
 })
 
--- TAB BRAINROT
-local TabBrainrot = Window:Tab({
+-- TAB BRAINROT (in Game Section)
+local TabBrainrot = SectionGame:Tab({
     Title = "Brainrot",
     Icon = "skull"
 })
@@ -435,6 +456,18 @@ TabBrainrot:Paragraph({
             end
         }
     }
+})
+
+-- TAB MISC (in Settings Section)
+local TabMisc = SectionSettings:Tab({
+    Title = "Misc",
+    Icon = "sliders"
+})
+
+TabMisc:Paragraph({
+    Title = "Miscellaneous Settings",
+    Desc = "Additional features and settings",
+    Locked = false
 })
 
 -- Auto Buy Logic
