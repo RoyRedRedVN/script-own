@@ -253,24 +253,14 @@ local function findTargetBrainrot()
     return nil
 end
 
--- ===================== UI SECTIONS =====================
-local SectionMain = Window:Section({
-    Title = "Main",
-    Icon = "house",
-    Opened = true,
-})
-
-local SectionGame = Window:Section({
-    Title = "Game",
-    Icon = "gamepad-2",
-    Opened = true,
-})
-
--- ===================== TAB HOME =====================
-local TabHome = SectionMain:Tab({
+-- ===================== UI TABS =====================
+-- TAB HOME
+local TabHome = Window:Tab({
     Title = "Home",
     Icon = "house"
 })
+
+TabHome:Section({Title = "Welcome"})
 
 TabHome:Paragraph({
     Title = "Welcome to Lowet Hub",
@@ -288,11 +278,13 @@ TabHome:Paragraph({
     }
 })
 
--- ===================== TAB AUTO FARM =====================
-local TabAutoFarm = SectionGame:Tab({
+-- TAB AUTO FARM
+local TabAutoFarm = Window:Tab({
     Title = "Auto Farm",
     Icon = "zap"
 })
+
+TabAutoFarm:Section({Title = "Auto Farm Settings"})
 
 TabAutoFarm:Paragraph({
     Title = "Auto Farm Brainrots",
@@ -324,11 +316,13 @@ TabAutoFarm:Toggle({
     end
 })
 
--- ===================== TAB SEEDS =====================
-local TabSeeds = SectionGame:Tab({
+-- TAB SEEDS
+local TabSeeds = Window:Tab({
     Title = "Seeds",
     Icon = "sprout"
 })
+
+TabSeeds:Section({Title = "Seeds Management"})
 
 local allSeedsList = getItemList(seedsFrame)
 
@@ -363,11 +357,13 @@ TabSeeds:Toggle({
     end
 })
 
--- ===================== TAB GEAR =====================
-local TabGear = SectionGame:Tab({
+-- TAB GEAR
+local TabGear = Window:Tab({
     Title = "Gear",
     Icon = "wrench"
 })
+
+TabGear:Section({Title = "Gear Management"})
 
 local allGearsList = getItemList(gearsFrame)
 
@@ -402,11 +398,13 @@ TabGear:Toggle({
     end
 })
 
--- ===================== TAB SELL =====================
-local TabSell = SectionGame:Tab({
+-- TAB SELL
+local TabSell = Window:Tab({
     Title = "Sell",
     Icon = "dollar-sign"
 })
+
+TabSell:Section({Title = "Quick Sell"})
 
 local rarities = {"Common", "Epic", "Legendary", "Godly", "Mythic", "Secret", "Limited"}
 local sellButtons = {}
@@ -451,6 +449,8 @@ TabSell:Paragraph({
         }
     }
 })
+
+TabSell:Section({Title = "Sell Plants"})
 
 TabSell:Dropdown({
     Title = "Select Plants to Sell",
@@ -497,11 +497,13 @@ TabSell:Paragraph({
     }
 })
 
--- ===================== TAB BRAINROT =====================
-local TabBrainrot = SectionGame:Tab({
+-- TAB BRAINROT
+local TabBrainrot = Window:Tab({
     Title = "Brainrot",
     Icon = "skull"
 })
+
+TabBrainrot:Section({Title = "Brainrot Tools"})
 
 TabBrainrot:Paragraph({
     Title = "Equip Best",
