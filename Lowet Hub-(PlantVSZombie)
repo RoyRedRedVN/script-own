@@ -253,16 +253,17 @@ local function findTargetBrainrot()
     return nil
 end
 
--- ===================== UI TABS =====================
--- TAB HOME
+-- ===================== TAB HOME =====================
 local TabHome = Window:Tab({
     Title = "Home",
     Icon = "house"
 })
 
-TabHome:Section({Title = "Welcome"})
+local SectionHome = TabHome:Section({
+    Title = "Welcome"
+})
 
-TabHome:Paragraph({
+SectionHome:Paragraph({
     Title = "Welcome to Lowet Hub",
     Desc = "Join our Discord: https://discord.gg/VyQfTtDJnY",
     Locked = false,
@@ -278,21 +279,22 @@ TabHome:Paragraph({
     }
 })
 
--- TAB AUTO FARM
+-- ===================== TAB AUTO FARM =====================
 local TabAutoFarm = Window:Tab({
     Title = "Auto Farm",
     Icon = "zap"
 })
 
-TabAutoFarm:Section({Title = "Auto Farm Settings"})
-
-TabAutoFarm:Paragraph({
-    Title = "Auto Farm Brainrots",
-    Desc = "Tự động farm brainrots với vũ khí",
-    Locked = false
+local SectionAutoFarm = TabAutoFarm:Section({
+    Title = "Auto Farm Settings"
 })
 
-TabAutoFarm:Dropdown({
+SectionAutoFarm:Paragraph({
+    Title = "Auto Farm Brainrots",
+    Desc = "Tự động farm brainrots với vũ khí"
+})
+
+SectionAutoFarm:Dropdown({
     Title = "Select Rarities",
     Values = {"Rare", "Epic", "Legendary", "Mythic", "Godly", "Secret", "Limited"},
     Value = {"Secret", "Limited"},
@@ -306,7 +308,7 @@ TabAutoFarm:Dropdown({
     end
 })
 
-TabAutoFarm:Toggle({
+SectionAutoFarm:Toggle({
     Title = "Enable Auto Farm",
     Description = "Bật/tắt auto farm brainrots",
     Default = false,
@@ -316,17 +318,19 @@ TabAutoFarm:Toggle({
     end
 })
 
--- TAB SEEDS
+-- ===================== TAB SEEDS =====================
 local TabSeeds = Window:Tab({
     Title = "Seeds",
     Icon = "sprout"
 })
 
-TabSeeds:Section({Title = "Seeds Management"})
+local SectionSeeds = TabSeeds:Section({
+    Title = "Seeds Management"
+})
 
 local allSeedsList = getItemList(seedsFrame)
 
-TabSeeds:Dropdown({
+SectionSeeds:Dropdown({
     Title = "Select Seeds",
     Values = allSeedsList,
     Value = {},
@@ -339,7 +343,7 @@ TabSeeds:Dropdown({
     end
 })
 
-TabSeeds:Toggle({
+SectionSeeds:Toggle({
     Title = "Auto Buy Selected",
     Default = false,
     Callback = function(value)
@@ -348,7 +352,7 @@ TabSeeds:Toggle({
     end
 })
 
-TabSeeds:Toggle({
+SectionSeeds:Toggle({
     Title = "Auto Buy All Seeds",
     Default = false,
     Callback = function(value)
@@ -357,17 +361,19 @@ TabSeeds:Toggle({
     end
 })
 
--- TAB GEAR
+-- ===================== TAB GEAR =====================
 local TabGear = Window:Tab({
     Title = "Gear",
     Icon = "wrench"
 })
 
-TabGear:Section({Title = "Gear Management"})
+local SectionGear = TabGear:Section({
+    Title = "Gear Management"
+})
 
 local allGearsList = getItemList(gearsFrame)
 
-TabGear:Dropdown({
+SectionGear:Dropdown({
     Title = "Select Gears",
     Values = allGearsList,
     Value = {},
@@ -380,7 +386,7 @@ TabGear:Dropdown({
     end
 })
 
-TabGear:Toggle({
+SectionGear:Toggle({
     Title = "Auto Buy Selected",
     Default = false,
     Callback = function(value)
@@ -389,7 +395,7 @@ TabGear:Toggle({
     end
 })
 
-TabGear:Toggle({
+SectionGear:Toggle({
     Title = "Auto Buy All Gears",
     Default = false,
     Callback = function(value)
@@ -398,13 +404,15 @@ TabGear:Toggle({
     end
 })
 
--- TAB SELL
+-- ===================== TAB SELL =====================
 local TabSell = Window:Tab({
     Title = "Sell",
     Icon = "dollar-sign"
 })
 
-TabSell:Section({Title = "Quick Sell"})
+local SectionQuickSell = TabSell:Section({
+    Title = "Quick Sell"
+})
 
 local rarities = {"Common", "Epic", "Legendary", "Godly", "Mythic", "Secret", "Limited"}
 local sellButtons = {}
@@ -422,13 +430,13 @@ for _, rarity in ipairs(rarities) do
     })
 end
 
-TabSell:Paragraph({
+SectionQuickSell:Paragraph({
     Title = "Quick Sell",
     Desc = "Bán items theo rarity",
     Buttons = sellButtons
 })
 
-TabSell:Paragraph({
+SectionQuickSell:Paragraph({
     Title = "Sell All Trash",
     Desc = "Bán tất cả items rác cùng lúc",
     Buttons = {
@@ -450,9 +458,11 @@ TabSell:Paragraph({
     }
 })
 
-TabSell:Section({Title = "Sell Plants"})
+local SectionPlants = TabSell:Section({
+    Title = "Sell Plants"
+})
 
-TabSell:Dropdown({
+SectionPlants:Dropdown({
     Title = "Select Plants to Sell",
     Values = allSeedsList,
     Value = {},
@@ -462,7 +472,7 @@ TabSell:Dropdown({
     end
 })
 
-TabSell:Paragraph({
+SectionPlants:Paragraph({
     Title = "Sell Plants",
     Buttons = {
         {
@@ -497,15 +507,17 @@ TabSell:Paragraph({
     }
 })
 
--- TAB BRAINROT
+-- ===================== TAB BRAINROT =====================
 local TabBrainrot = Window:Tab({
     Title = "Brainrot",
     Icon = "skull"
 })
 
-TabBrainrot:Section({Title = "Brainrot Tools"})
+local SectionBrainrot = TabBrainrot:Section({
+    Title = "Brainrot Tools"
+})
 
-TabBrainrot:Paragraph({
+SectionBrainrot:Paragraph({
     Title = "Equip Best",
     Desc = "Trang bị brainrots tốt nhất",
     Buttons = {
@@ -525,7 +537,6 @@ TabBrainrot:Paragraph({
 -- ===================== AUTO BUY LOGIC =====================
 task.spawn(function()
     while task.wait(1) do
-        -- Auto Buy Selected Seeds
         if AutoBuySelectSeed and #SelectedSeeds > 0 then
             for _, seedName in ipairs(SelectedSeeds) do
                 local seedFrame = seedsFrame:FindFirstChild(seedName)
@@ -538,7 +549,6 @@ task.spawn(function()
             end
         end
         
-        -- Auto Buy All Seeds
         if AutoBuyAllSeeds then
             for _, seedFrame in ipairs(seedsFrame:GetChildren()) do
                 if seedFrame:IsA("Frame") and seedFrame:FindFirstChild("Stock") then
@@ -550,7 +560,6 @@ task.spawn(function()
             end
         end
         
-        -- Auto Buy Selected Gears
         if AutoBuySelectGear and #SelectedGears > 0 then
             for _, gearName in ipairs(SelectedGears) do
                 local gearFrame = gearsFrame:FindFirstChild(gearName)
@@ -563,7 +572,6 @@ task.spawn(function()
             end
         end
         
-        -- Auto Buy All Gears
         if AutoBuyAllGear then
             for _, gearFrame in ipairs(gearsFrame:GetChildren()) do
                 if gearFrame:IsA("Frame") and gearFrame:FindFirstChild("Stock") then
@@ -593,10 +601,8 @@ task.spawn(function()
                 if targetPart then
                     noclip()
                     
-                    -- Teleport đến brainrot
                     hrp.CFrame = CFrame.new(targetPart.Position)
                     
-                    -- Tạo BodyPosition để giữ character cố định
                     local bodyPos = Instance.new("BodyPosition")
                     bodyPos.MaxForce = Vector3.new(1e5, 1e5, 1e5)
                     bodyPos.P = 5000
@@ -606,13 +612,11 @@ task.spawn(function()
                     
                     local lastFire = 0
                     
-                    -- Vòng lặp tấn công brainrot
                     while targetBrainrot.Parent and AutoFarmEnabled do
                         bodyPos.Position = targetPart.Position
                         
                         local progress = targetBrainrot:GetAttribute("Progress") or 0
                         
-                        -- Equip vũ khí khi progress > 60%
                         if progress > 0.6 then
                             local tool = findFrostGrenade() or findBatItem()
                             if tool then
@@ -622,7 +626,6 @@ task.spawn(function()
                             end
                         end
                         
-                        -- Bắn với interval
                         local now = tick()
                         if now - lastFire >= FIRE_INTERVAL then
                             fireFrostGrenade(targetBrainrot)
@@ -632,7 +635,6 @@ task.spawn(function()
                         task.wait(0.03)
                     end
                     
-                    -- Dọn dẹp
                     humanoid:UnequipTools()
                     bodyPos:Destroy()
                     clip()
