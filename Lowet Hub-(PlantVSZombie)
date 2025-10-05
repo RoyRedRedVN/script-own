@@ -71,8 +71,7 @@ TabSeeds:Paragraph({
 
 local SeedsDropdown = TabSeeds:Dropdown({
     Title = "Select Seeds",
-    Description = "Choose your seed types",
-    Options = {
+    Values = {
         "Cactus",
         "Strawberry",
         "Pumpkin",
@@ -87,13 +86,13 @@ local SeedsDropdown = TabSeeds:Dropdown({
         "Tomatrio",
         "Mango"
     },
+    Value = {},
     Multi = true,
-    Search = true,
-    Clearable = true,
+    AllowNone = true,
     Callback = function(selected)
         SelectedSeeds = selected
         if type(selected) == "table" then
-            print("Selected Seeds:", #selected > 0 and table.concat(selected, ", ") or "None")
+            print("Selected Seeds: " .. game:GetService("HttpService"):JSONEncode(selected))
         end
     end
 })
@@ -132,21 +131,20 @@ TabGear:Paragraph({
 
 local GearsDropdown = TabGear:Dropdown({
     Title = "Select Gears",
-    Description = "Choose your gears",
-    Options = {
+    Values = {
         "Frost Grenade",
         "Frost Blower",
         "Banana Gun",
         "Carrot Launcher",
         "Water Bucket"
     },
+    Value = {},
     Multi = true,
-    Search = true,
-    Clearable = true,
+    AllowNone = true,
     Callback = function(selected)
         SelectedGears = selected
         if type(selected) == "table" then
-            print("Selected Gears:", #selected > 0 and table.concat(selected, ", ") or "None")
+            print("Selected Gears: " .. game:GetService("HttpService"):JSONEncode(selected))
         end
     end
 })
