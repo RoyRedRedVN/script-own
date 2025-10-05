@@ -24,7 +24,7 @@ local Window = WindUI:CreateWindow({
 -- Section Main for Home
 local SectionMain = Window:Section({
     Title = "Main",
-    Icon = "home",
+    Icon = "house",
     Opened = true,
 })
 
@@ -51,7 +51,6 @@ local AutoBuyAllSeeds = false
 local AutoBuySelectGear = false
 local AutoBuyAllGear = false
 local AutoFarmEnabled = false
-local AutoBatEnabled = false
 
 -- Services
 local Players = game:GetService("Players")
@@ -119,21 +118,11 @@ local RarityDropdown = TabAutoFarm:Dropdown({
 
 TabAutoFarm:Toggle({
     Title = "Enable Auto Farm",
-    Description = "Auto teleport and use Frost Grenade on brainrots",
+    Description = "Auto teleport, use Frost Grenade, and auto click bats",
     Default = false,
     Callback = function(value)
         AutoFarmEnabled = value
         print("Auto Farm:", value)
-    end
-})
-
-TabAutoFarm:Toggle({
-    Title = "Auto Bat Clicker",
-    Description = "Automatically click bat weapons",
-    Default = false,
-    Callback = function(value)
-        AutoBatEnabled = value
-        print("Auto Bat Clicker:", value)
     end
 })
 
@@ -519,7 +508,7 @@ TabBrainrot:Paragraph({
 -- TAB MISC (in Settings Section)
 local TabMisc = SectionSettings:Tab({
     Title = "Misc",
-    Icon = "sliders"
+    Icon = "settings"
 })
 
 TabMisc:Paragraph({
@@ -582,11 +571,58 @@ task.spawn(function()
     end
 end)
 
--- Auto Farm Logic
+-- Auto Farm Logic with Bat Auto Clicker
 task.spawn(function()
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
     local humanoid = character:WaitForChild("Humanoid")
+    
+    -- Bat auto clicker setup
+    local batNames = {
+        ["Basic Bat"] = true,
+        ["Leather Grip Bat"] = true,
+        ["Iron Plate Bat"] = true,
+        ["Iron Core Bat"] = true,
+        ["Aluminum Bat"] = true
+    }
+    
+    local function findBat()
+        local backpack = player.Backpack
+        
+        -- Check in Backpack
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if batNames[tool.Name] then
+                return tool
+            end
+        end
+        
+        -- Check in Character (equipped)
+        for _, tool in ipairs(character:GetChildren()) do
+            if batNames[tool.Name] then
+                return tool
+            end
+        end
+        
+        return nil
+    end
+    
+    local function clickBat()
+        if AutoFarmEnabled then
+            local bat = findBat()
+            if bat then
+                -- If bat is in backpack, move to character (equip)
+                if bat.Parent == player.Backpack then
+                    bat.Parent = character
+                    task.wait(0.05)
+                end
+                
+                -- Activate the bat (simulate click)
+                pcall(function()
+                    bat:Activate()
+                end)
+            end
+        end
+    end
     
     local plotsFolder = Workspace:WaitForChild("Plots")
     local myPlot
@@ -717,6 +753,7 @@ task.spawn(function()
                     bodyPos.Position = hrp.Position
                     bodyPos.Parent = hrp
                     local lastFire = 0
+                    local lastBatClick = 0
                     while targetBrainrot.Parent and AutoFarmEnabled do
                         bodyPos.Position = targetPart.Position
                         local progress = targetBrainrot:GetAttribute("Progress") or 0
@@ -731,6 +768,13 @@ task.spawn(function()
                             fireFrostGrenade(targetBrainrot)
                             lastFire = now
                         end
+                        
+                        -- Auto click bat while farming
+                        if now - lastBatClick >= 0.05 then
+                            clickBat()
+                            lastBatClick = now
+                        end
+                        
                         task.wait(0.03)
                     end
                     humanoid:UnequipTools()
@@ -742,64 +786,6 @@ task.spawn(function()
             end
         else
             task.wait(1)
-        end
-    end
-end)
-
--- Auto Bat Clicker Logic
-task.spawn(function()
-    local batNames = {
-        ["Basic Bat"] = true,
-        ["Leather Grip Bat"] = true,
-        ["Iron Plate Bat"] = true,
-        ["Iron Core Bat"] = true,
-        ["Aluminum Bat"] = true
-    }
-    
-    local function hasBat()
-        local character = player.Character
-        if not character then return nil end
-        
-        local backpack = player.Backpack
-        
-        -- Check in Backpack
-        for _, tool in ipairs(backpack:GetChildren()) do
-            if batNames[tool.Name] then
-                return tool
-            end
-        end
-        
-        -- Check in Character (equipped)
-        for _, tool in ipairs(character:GetChildren()) do
-            if batNames[tool.Name] then
-                return tool
-            end
-        end
-        
-        return nil
-    end
-    
-    while true do
-        if AutoBatEnabled then
-            local bat = hasBat()
-            if bat then
-                local character = player.Character
-                if character then
-                    -- If bat is in backpack, move to character (equip)
-                    if bat.Parent == player.Backpack then
-                        bat.Parent = character
-                        task.wait(0.1)
-                    end
-                    
-                    -- Activate the bat (simulate click)
-                    pcall(function()
-                        bat:Activate()
-                    end)
-                end
-            end
-            task.wait(0.05) -- Fast clicking, adjust delay if needed
-        else
-            task.wait(0.5)
         end
     end
 end)
