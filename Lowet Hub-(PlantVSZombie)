@@ -51,6 +51,7 @@ local AutoBuyAllSeeds = false
 local AutoBuySelectGear = false
 local AutoBuyAllGear = false
 local AutoFarmEnabled = false
+local AutoFarmMoneyEnabled = false
 
 -- Services
 local Players = game:GetService("Players")
@@ -123,6 +124,16 @@ TabAutoFarm:Toggle({
     Callback = function(value)
         AutoFarmEnabled = value
         print("Auto Farm:", value)
+    end
+})
+
+TabAutoFarm:Toggle({
+    Title = "Auto Farm Money With Best Brainrot",
+    Description = "Auto equip best brainrots every 10 seconds",
+    Default = false,
+    Callback = function(value)
+        AutoFarmMoneyEnabled = value
+        print("Auto Farm Money:", value)
     end
 })
 
@@ -784,6 +795,21 @@ task.spawn(function()
             else
                 task.wait(1)
             end
+        else
+            task.wait(1)
+        end
+    end
+end)
+
+-- Auto Farm Money Logic
+task.spawn(function()
+    while true do
+        if AutoFarmMoneyEnabled then
+            pcall(function()
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
+                print("✓ Equipped best brainrots for farming!")
+            end)
+            task.wait(10) -- Wait 10 seconds before next equip
         else
             task.wait(1)
         end
