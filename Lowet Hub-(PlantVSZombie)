@@ -632,13 +632,10 @@ task.spawn(function()
         for i = #rebirthBatList, 1, -1 do
             local bat = backpack:FindFirstChild(rebirthBatList[i])
             if bat then
-                task.spawn(function()
-                    pcall(function()
-                        humanoid:EquipTool(bat)
-                        currentEquippedBat = bat
-                    end)
+                pcall(function()
+                    humanoid:EquipTool(bat)
+                    currentEquippedBat = bat
                 end)
-                task.wait(0.08)
                 return true
             end
         end
@@ -649,7 +646,7 @@ task.spawn(function()
     -- Optimized attack system
     local attackQueue = {}
     local isAttacking = false
-    local ATTACK_INTERVAL = 0.04
+    local ATTACK_INTERVAL = 0.01
     
     task.spawn(function()
         local attackRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AttacksServer"):WaitForChild("WeaponAttack")
@@ -662,15 +659,13 @@ task.spawn(function()
                 
                 local targetName = table.remove(attackQueue, 1)
                 
-                task.spawn(function()
-                    pcall(function()
-                        local bat = currentEquippedBat or getBestBat()
-                        if bat and bat.Parent == character then
-                            bat:Activate()
-                        end
-                        
-                        attackRemote:FireServer({targetName})
-                    end)
+                pcall(function()
+                    local bat = currentEquippedBat or getBestBat()
+                    if bat and bat.Parent == character then
+                        bat:Activate()
+                    end
+                    
+                    attackRemote:FireServer({targetName})
                 end)
                 
                 isAttacking = false
@@ -686,7 +681,7 @@ task.spawn(function()
             if AutoFarmEnabled then
                 autoEquipBestBat()
             end
-            task.wait(2)
+            task.wait(0.5)
         end
     end)
     
@@ -834,12 +829,14 @@ task.spawn(function()
                             lastFire = now
                         end
                         
-                        -- Add brainrot to attack queue for optimized bat attacks
+                        -- Add brainrot to attack queue for optimized bat attacks (spam multiple times)
                         if targetBrainrot.Name then
-                            table.insert(attackQueue, targetBrainrot.Name)
+                            for i = 1, 3 do
+                                table.insert(attackQueue, targetBrainrot.Name)
+                            end
                         end
                         
-                        task.wait(0.03)
+                        task.wait(0.01)
                     end
                     humanoid:UnequipTools()
                     bodyPos:Destroy()
