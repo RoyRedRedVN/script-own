@@ -528,6 +528,88 @@ TabMisc:Paragraph({
     Locked = false
 })
 
+TabMisc:Paragraph({
+    Title = "Performance Optimization",
+    Desc = "Remove textures to reduce lag",
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "zap",
+            Title = "Remove Textures",
+            Callback = function()
+                local removedCount = 0
+                
+                pcall(function()
+                    -- Remove textures from workspace
+                    for _, obj in pairs(Workspace:GetDescendants()) do
+                        if obj:IsA("Texture") or obj:IsA("Decal") then
+                            obj:Destroy()
+                            removedCount = removedCount + 1
+                        elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                            obj.Enabled = false
+                            removedCount = removedCount + 1
+                        elseif obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("UnionOperation") then
+                            obj.Material = Enum.Material.SmoothPlastic
+                            obj.Reflectance = 0
+                            removedCount = removedCount + 1
+                        end
+                    end
+                    
+                    -- Reduce lighting effects
+                    local Lighting = game:GetService("Lighting")
+                    Lighting.GlobalShadows = false
+                    Lighting.FogEnd = 9e9
+                    Lighting.Brightness = 0
+                    
+                    -- Remove post-effects
+                    for _, effect in pairs(Lighting:GetChildren()) do
+                        if effect:IsA("PostEffect") then
+                            effect.Enabled = false
+                        end
+                    end
+                    
+                    -- Optimize terrain
+                    if Workspace:FindFirstChild("Terrain") then
+                        Workspace.Terrain.WaterWaveSize = 0
+                        Workspace.Terrain.WaterWaveSpeed = 0
+                        Workspace.Terrain.WaterReflectance = 0
+                        Workspace.Terrain.WaterTransparency = 0
+                    end
+                end)
+                
+                print("✓ Removed " .. removedCount .. " textures/effects! Game optimized for performance.")
+            end
+        }
+    }
+})
+
+TabMisc:Toggle({
+    Title = "Auto Remove New Textures",
+    Description = "Automatically remove textures from new objects",
+    Default = false,
+    Callback = function(value)
+        if value then
+            -- Auto remove textures from new descendants
+            Workspace.DescendantAdded:Connect(function(obj)
+                task.wait(0.1)
+                pcall(function()
+                    if obj:IsA("Texture") or obj:IsA("Decal") then
+                        obj:Destroy()
+                    elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                        obj.Enabled = false
+                    elseif obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("UnionOperation") then
+                        obj.Material = Enum.Material.SmoothPlastic
+                        obj.Reflectance = 0
+                    end
+                end)
+            end)
+            print("✓ Auto Remove Textures: ON")
+        else
+            print("✓ Auto Remove Textures: OFF")
+        end
+    end
+})
+
 -- Auto Buy Logic
 task.spawn(function()
     while task.wait(0.5) do
@@ -675,11 +757,36 @@ task.spawn(function()
         end
     end)
     
-    -- Auto equip best bat loop
+    -- Auto equip best bat loop (only when targeting brainrot)
     task.spawn(function()
         while true do
             if AutoFarmEnabled then
-                autoEquipBestBat()
+                local brainrotsFolder = Workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
+                local hasTargetBrainrot = false
+                
+                -- Check if there's a valid target brainrot
+                for _, b in ipairs(brainrotsFolder:GetChildren()) do
+                    if b:IsA("Model") then
+                        local rarity = b:GetAttribute("Rarity")
+                        if rarity and table.find(SelectedRarities, rarity) then
+                            hasTargetBrainrot = true
+                            break
+                        end
+                    end
+                end
+                
+                -- Only equip bat if there's a target brainrot
+                if hasTargetBrainrot then
+                    autoEquipBestBat()
+                else
+                    -- Unequip bat if no target
+                    if currentEquippedBat and currentEquippedBat.Parent == character then
+                        pcall(function()
+                            humanoid:UnequipTools()
+                            currentEquippedBat = nil
+                        end)
+                    end
+                end
             end
             task.wait(0.5)
         end
