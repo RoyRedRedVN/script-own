@@ -588,52 +588,107 @@ task.spawn(function()
     local hrp = character:WaitForChild("HumanoidRootPart")
     local humanoid = character:WaitForChild("Humanoid")
     
-    -- Bat auto clicker setup
-    local batNames = {
-        ["Basic Bat"] = true,
-        ["Leather Grip Bat"] = true,
-        ["Iron Plate Bat"] = true,
-        ["Iron Core Bat"] = true,
-        ["Aluminum Bat"] = true
+    -- Enhanced Bat Management
+    local rebirthBatList = {
+        "Basic Bat",
+        "Leather Grip Bat",
+        "Iron Plate Bat",
+        "Iron Core Bat",
+        "Aluminum Bat"
     }
     
-    local function findBat()
-        local backpack = player.Backpack
+    local currentEquippedBat = nil
+    
+    local function getBestBat()
+        local backpack = player:FindFirstChild("Backpack")
         
-        -- Check in Backpack
-        for _, tool in ipairs(backpack:GetChildren()) do
-            if batNames[tool.Name] then
-                return tool
-            end
-        end
+        if not character or not backpack then return nil end
         
-        -- Check in Character (equipped)
-        for _, tool in ipairs(character:GetChildren()) do
-            if batNames[tool.Name] then
-                return tool
-            end
+        for i = #rebirthBatList, 1, -1 do
+            local bat = character:FindFirstChild(rebirthBatList[i]) or backpack:FindFirstChild(rebirthBatList[i])
+            if bat then return bat end
         end
         
         return nil
     end
     
-    local function clickBat()
-        if AutoFarmEnabled then
-            local bat = findBat()
+    local function autoEquipBestBat()
+        local backpack = player:FindFirstChild("Backpack")
+        
+        if not character or not backpack then return false end
+        
+        if not humanoid then return false end
+        
+        -- Check if best bat is already equipped
+        for i = #rebirthBatList, 1, -1 do
+            local bat = character:FindFirstChild(rebirthBatList[i])
             if bat then
-                -- If bat is in backpack, move to character (equip)
-                if bat.Parent == player.Backpack then
-                    bat.Parent = character
-                    task.wait(0.05)
-                end
-                
-                -- Activate the bat (simulate click)
-                pcall(function()
-                    bat:Activate()
-                end)
+                currentEquippedBat = bat
+                return true
             end
         end
+        
+        -- Equip best bat from backpack
+        for i = #rebirthBatList, 1, -1 do
+            local bat = backpack:FindFirstChild(rebirthBatList[i])
+            if bat then
+                task.spawn(function()
+                    pcall(function()
+                        humanoid:EquipTool(bat)
+                        currentEquippedBat = bat
+                    end)
+                end)
+                task.wait(0.08)
+                return true
+            end
+        end
+        
+        return false
     end
+    
+    -- Optimized attack system
+    local attackQueue = {}
+    local isAttacking = false
+    local ATTACK_INTERVAL = 0.04
+    
+    task.spawn(function()
+        local attackRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AttacksServer"):WaitForChild("WeaponAttack")
+        
+        while true do
+            task.wait(ATTACK_INTERVAL)
+            
+            if #attackQueue > 0 and not isAttacking and AutoFarmEnabled then
+                isAttacking = true
+                
+                local targetName = table.remove(attackQueue, 1)
+                
+                task.spawn(function()
+                    pcall(function()
+                        local bat = currentEquippedBat or getBestBat()
+                        if bat and bat.Parent == character then
+                            bat:Activate()
+                        end
+                        
+                        attackRemote:FireServer({targetName})
+                    end)
+                end)
+                
+                isAttacking = false
+            elseif not AutoFarmEnabled then
+                attackQueue = {}
+            end
+        end
+    end)
+    
+    -- Auto equip best bat loop
+    task.spawn(function()
+        while true do
+            if AutoFarmEnabled then
+                autoEquipBestBat()
+            end
+            task.wait(2)
+        end
+    end)
     
     local plotsFolder = Workspace:WaitForChild("Plots")
     local myPlot
@@ -764,7 +819,6 @@ task.spawn(function()
                     bodyPos.Position = hrp.Position
                     bodyPos.Parent = hrp
                     local lastFire = 0
-                    local lastBatClick = 0
                     while targetBrainrot.Parent and AutoFarmEnabled do
                         bodyPos.Position = targetPart.Position
                         local progress = targetBrainrot:GetAttribute("Progress") or 0
@@ -780,10 +834,9 @@ task.spawn(function()
                             lastFire = now
                         end
                         
-                        -- Auto click bat while farming
-                        if now - lastBatClick >= 0.05 then
-                            clickBat()
-                            lastBatClick = now
+                        -- Add brainrot to attack queue for optimized bat attacks
+                        if targetBrainrot.Name then
+                            table.insert(attackQueue, targetBrainrot.Name)
                         end
                         
                         task.wait(0.03)
