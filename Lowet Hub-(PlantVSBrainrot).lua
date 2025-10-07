@@ -2,7 +2,6 @@ local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footag
 
 WindUI:AddTheme({
     Name = "POWER",
-    
     Accent = Color3.fromRGB(255, 107, 53),
     Dialog = Color3.fromRGB(40, 20, 10),
     Outline = Color3.fromRGB(255, 140, 66),
@@ -20,18 +19,9 @@ local Window = WindUI:CreateWindow({
     Icon = "door-open",
     Author = "by RedMod",
     Folder = "LowetHub",
-    
     Transparent = true,
     Theme = "POWER",
     Resizable = true,
-})
-
-Window.Icon:SetAnonymous(false)
-
-Window:Tag({
-    Title = "Demo",
-    Color = Color3.fromHex("#30ff6a"),
-    Radius = 0, -- from 0 to 13
 })
 
 Window:EditOpenButton({
@@ -39,599 +29,211 @@ Window:EditOpenButton({
     Icon = "monitor",
     CornerRadius = UDim.new(0, 16),
     StrokeThickness = 2,
-    Color = ColorSequence.new(
-        Color3.fromRGB(255, 107, 53), 
-        Color3.fromRGB(255, 140, 66)
-    ),
-    OnlyMobile = false,
-    Enabled = true,
+    Color = ColorSequence.new(Color3.fromRGB(255, 107, 53), Color3.fromRGB(255, 140, 66)),
     Draggable = true,
 })
 
--- Section Main for Home
-local SectionMain = Window:Section({
-    Title = "Main",
-    Icon = "house",
-    Opened = true,
-})
-
--- Section Game for gameplay features
-local SectionGame = Window:Section({
-    Title = "Game",
-    Icon = "gamepad-2",
-    Opened = true,
-})
-
--- Section Settings for misc
-local SectionSettings = Window:Section({
-    Title = "Settings",
-    Icon = "settings",
-    Opened = true,
-})
-
--- Variables
-local SelectedSeeds = {}
-local SelectedGears = {}
-local SelectedSellPlants = {}
-local AutoBuySelectSeed = false
-local AutoBuyAllSeeds = false
-local AutoBuySelectGear = false
-local AutoBuyAllGear = false
-local AutoFarmEnabled = false
-local AutoFarmMoneyEnabled = false
+Window.Icon:SetAnonymous(false)
+Window:Tag({Title = "V1.0", Color = Color3.fromRGB(255, 107, 53), Radius = 13})
 
 -- Services
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
 
--- TAB HOME (in Main Section)
-local TabHome = SectionMain:Tab({
-    Title = "Home",
-    Icon = "house"
-})
+-- Variables
+local SelectedSeeds, SelectedGears, SelectedSellPlants, SelectedRarities = {}, {}, {}, {"Secret", "Limited"}
+local AutoBuySelectSeed, AutoBuyAllSeeds, AutoBuySelectGear, AutoBuyAllGear = false, false, false, false
+local AutoFarmEnabled, AutoFarmMoneyEnabled = false, false
 
-TabHome:Paragraph({
-    Title = "Welcome to Lowet Hub",
-    Desc = "Join our Discord community for updates and support!",
-    Locked = false
-})
+-- Sections
+local SectionMain = Window:Section({Title = "Main", Icon = "house", Opened = true})
+local SectionGame = Window:Section({Title = "Game", Icon = "gamepad-2", Opened = true})
+local SectionSettings = Window:Section({Title = "Settings", Icon = "settings", Opened = true})
 
+-- Home Tab
+local TabHome = SectionMain:Tab({Title = "Home", Icon = "house"})
+TabHome:Paragraph({Title = "Welcome to Lowet Hub", Desc = "Join our Discord community for updates and support!"})
 TabHome:Paragraph({
     Title = "Discord Server",
     Desc = "https://discord.gg/VyQfTtDJnY",
-    Locked = false,
-    Buttons = {
-        {
-            Icon = "copy",
-            Title = "Copy Link",
-            Callback = function()
-                setclipboard("https://discord.gg/VyQfTtDJnY")
-                print("✓ Discord link copied to clipboard!")
-            end
-        }
-    }
+    Buttons = {{
+        Icon = "copy",
+        Title = "Copy Link",
+        Callback = function()
+            setclipboard("https://discord.gg/VyQfTtDJnY")
+            print("✓ Discord link copied!")
+        end
+    }}
 })
 
--- TAB AUTO FARM (in Game Section) - Added first in Game section
-local TabAutoFarm = SectionGame:Tab({
-    Title = "Auto Farm",
-    Icon = "zap"
-})
-
-TabAutoFarm:Paragraph({
-    Title = "Auto Farm Brainrots",
-    Desc = "Automatically farm brainrots with Frost Grenade",
-    Locked = false
-})
-
-local SelectedRarities = {"Secret", "Limited"}
-
-local RarityDropdown = TabAutoFarm:Dropdown({
+-- Auto Farm Tab
+local TabAutoFarm = SectionGame:Tab({Title = "Auto Farm", Icon = "zap"})
+TabAutoFarm:Paragraph({Title = "Auto Farm Brainrots", Desc = "Automatically farm brainrots with Frost Grenade"})
+TabAutoFarm:Dropdown({
     Title = "Select Rarities to Farm",
     Values = {"Rare", "Epic", "Legendary", "Mythic", "Godly", "Secret", "Limited"},
     Value = {"Secret", "Limited"},
     Multi = true,
     AllowNone = true,
-    Callback = function(selected)
-        SelectedRarities = selected
-        if type(selected) == "table" then
-            print("Selected Rarities: " .. game:GetService("HttpService"):JSONEncode(selected))
-        end
-    end
+    Callback = function(selected) SelectedRarities = selected end
 })
-
 TabAutoFarm:Toggle({
     Title = "Enable Auto Farm",
     Description = "Auto teleport, use Frost Grenade, and auto click bats",
-    Default = false,
-    Callback = function(value)
-        AutoFarmEnabled = value
-        print("Auto Farm:", value)
-    end
+    Callback = function(value) AutoFarmEnabled = value end
 })
-
 TabAutoFarm:Toggle({
-    Title = "Auto Farm Money With Best Brainrot",
+    Title = "Auto Farm Money",
     Description = "Auto equip best brainrots every 10 seconds",
-    Default = false,
-    Callback = function(value)
-        AutoFarmMoneyEnabled = value
-        print("Auto Farm Money:", value)
-    end
+    Callback = function(value) AutoFarmMoneyEnabled = value end
 })
 
--- TAB SEEDS (in Game Section)
-local TabSeeds = SectionGame:Tab({
-    Title = "Seeds",
-    Icon = "sprout"
-})
-
-TabSeeds:Paragraph({
-    Title = "Seeds Manager",
-    Desc = "Buy and manage your seeds",
-    Locked = false
-})
-
-local SeedsDropdown = TabSeeds:Dropdown({
+-- Seeds Tab
+local TabSeeds = SectionGame:Tab({Title = "Seeds", Icon = "sprout"})
+TabSeeds:Paragraph({Title = "Seeds Manager", Desc = "Buy and manage your seeds"})
+TabSeeds:Dropdown({
     Title = "Select Seeds",
-    Values = {
-        "Cactus",
-        "Strawberry",
-        "Pumpkin",
-        "Dragon Fruit",
-        "Eggplant",
-        "Watermelon",
-        "Cocotank",
-        "Grape",
-        "Carnivorous Plant",
-        "Mr carrot",
-        "Shroombino",
-        "Tomatrio",
-        "Mango"
-    },
-    Value = {},
+    Values = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
     Multi = true,
     AllowNone = true,
-    Callback = function(selected)
-        SelectedSeeds = selected
-        if type(selected) == "table" then
-            print("Selected Seeds: " .. game:GetService("HttpService"):JSONEncode(selected))
-        end
-    end
+    Callback = function(selected) SelectedSeeds = selected end
 })
+TabSeeds:Toggle({Title = "Auto Buy Selected", Description = "Auto buy selected seeds", Callback = function(value) AutoBuySelectSeed = value end})
+TabSeeds:Toggle({Title = "Auto Buy All", Description = "Auto buy all seeds", Callback = function(value) AutoBuyAllSeeds = value end})
 
-TabSeeds:Toggle({
-    Title = "Auto Buy Selected",
-    Description = "Auto buy selected seeds",
-    Default = false,
-    Callback = function(value)
-        AutoBuySelectSeed = value
-        print("Auto Buy Selected Seeds:", value)
-    end
-})
-
-TabSeeds:Toggle({
-    Title = "Auto Buy All",
-    Description = "Auto buy all seeds",
-    Default = false,
-    Callback = function(value)
-        AutoBuyAllSeeds = value
-        print("Auto Buy All Seeds:", value)
-    end
-})
-
--- TAB GEAR (in Game Section)
-local TabGear = SectionGame:Tab({
-    Title = "Gear",
-    Icon = "wrench"
-})
-
-TabGear:Paragraph({
-    Title = "Gear Shop",
-    Desc = "Buy and equip your gears",
-    Locked = false
-})
-
-local GearsDropdown = TabGear:Dropdown({
+-- Gear Tab
+local TabGear = SectionGame:Tab({Title = "Gear", Icon = "wrench"})
+TabGear:Paragraph({Title = "Gear Shop", Desc = "Buy and equip your gears"})
+TabGear:Dropdown({
     Title = "Select Gears",
-    Values = {
-        "Frost Grenade",
-        "Frost Blower",
-        "Banana Gun",
-        "Carrot Launcher",
-        "Water Bucket"
-    },
-    Value = {},
+    Values = {"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"},
     Multi = true,
     AllowNone = true,
-    Callback = function(selected)
-        SelectedGears = selected
-        if type(selected) == "table" then
-            print("Selected Gears: " .. game:GetService("HttpService"):JSONEncode(selected))
+    Callback = function(selected) SelectedGears = selected end
+})
+TabGear:Toggle({Title = "Auto Buy Selected", Description = "Auto buy selected gears", Callback = function(value) AutoBuySelectGear = value end})
+TabGear:Toggle({Title = "Auto Buy All", Description = "Auto buy all gears", Callback = function(value) AutoBuyAllGear = value end})
+
+-- Sell Tab
+local TabSell = SectionGame:Tab({Title = "Sell", Icon = "dollar-sign"})
+TabSell:Paragraph({Title = "Auto Sell Manager", Desc = "Sell items by rarity"})
+
+local function createSellButton(rarity)
+    return {
+        Icon = "trash-2",
+        Title = "Sell " .. rarity,
+        Callback = function()
+            pcall(function()
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(rarity)
+                print("✓ Sold all " .. rarity .. " items!")
+            end)
         end
-    end
-})
-
-TabGear:Toggle({
-    Title = "Auto Buy Selected",
-    Description = "Auto buy selected gears",
-    Default = false,
-    Callback = function(value)
-        AutoBuySelectGear = value
-        print("Auto Buy Selected Gears:", value)
-    end
-})
-
-TabGear:Toggle({
-    Title = "Auto Buy All",
-    Description = "Auto buy all gears",
-    Default = false,
-    Callback = function(value)
-        AutoBuyAllGear = value
-        print("Auto Buy All Gears:", value)
-    end
-})
-
--- TAB SELL (in Game Section)
-local TabSell = SectionGame:Tab({
-    Title = "Sell",
-    Icon = "dollar-sign"
-})
-
-TabSell:Paragraph({
-    Title = "Auto Sell Manager",
-    Desc = "Sell items by rarity",
-    Locked = false
-})
+    }
+end
 
 TabSell:Paragraph({
     Title = "Sell Trash Items",
     Desc = "Quick sell items by rarity",
-    Locked = false,
     Buttons = {
-        {
-            Icon = "trash-2",
-            Title = "Sell Common",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Common"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Common items!")
-                else
-                    warn("✗ Failed to sell Common items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Epic",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Epic"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Epic items!")
-                else
-                    warn("✗ Failed to sell Epic items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Legendary",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Legendary"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Legendary items!")
-                else
-                    warn("✗ Failed to sell Legendary items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Godly",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Godly"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Godly items!")
-                else
-                    warn("✗ Failed to sell Godly items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Mythic",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Mythic"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Mythic items!")
-                else
-                    warn("✗ Failed to sell Mythic items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Secret",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Secret"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Secret items!")
-                else
-                    warn("✗ Failed to sell Secret items")
-                end
-            end
-        },
-        {
-            Icon = "trash-2",
-            Title = "Sell Limited",
-            Callback = function()
-                local success = pcall(function()
-                    local args = {"Limited"}
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                end)
-                if success then
-                    print("✓ Sold all Limited items!")
-                else
-                    warn("✗ Failed to sell Limited items")
-                end
-            end
-        }
+        createSellButton("Common"),
+        createSellButton("Epic"),
+        createSellButton("Legendary"),
+        createSellButton("Godly"),
+        createSellButton("Mythic"),
+        createSellButton("Secret"),
+        createSellButton("Limited")
     }
 })
 
 TabSell:Paragraph({
     Title = "Sell All Trash",
     Desc = "Sell multiple rarities at once",
-    Locked = false,
-    Buttons = {
-        {
-            Icon = "trash",
-            Title = "Sell All Trash",
-            Callback = function()
-                local rarities = {"Common", "Epic", "Legendary", "Godly", "Mythic", "Secret", "Limited"}
-                local soldCount = 0
-                
-                for _, rarity in ipairs(rarities) do
-                    local success = pcall(function()
-                        local args = {rarity}
-                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(unpack(args))
-                    end)
-                    if success then
-                        soldCount = soldCount + 1
-                    end
-                    task.wait(0.1)
-                end
-                
-                print("✓ Sold " .. soldCount .. " rarity types!")
+    Buttons = {{
+        Icon = "trash",
+        Title = "Sell All Trash",
+        Callback = function()
+            local rarities = {"Common", "Epic", "Legendary", "Godly", "Mythic", "Secret", "Limited"}
+            for _, rarity in ipairs(rarities) do
+                pcall(function()
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AutoSell"):FireServer(rarity)
+                end)
+                task.wait(0.1)
             end
-        }
-    }
+            print("✓ Sold all trash!")
+        end
+    }}
 })
 
-TabSell:Paragraph({
-    Title = "Sell Plants",
-    Desc = "Auto equip and sell selected plants",
-    Locked = false
-})
-
-local SellPlantsDropdown = TabSell:Dropdown({
+TabSell:Paragraph({Title = "Sell Plants", Desc = "Auto equip and sell selected plants"})
+TabSell:Dropdown({
     Title = "Select Plants to Sell",
-    Values = {
-        "Cactus",
-        "Strawberry",
-        "Pumpkin",
-        "Dragon Fruit",
-        "Eggplant",
-        "Watermelon",
-        "Cocotank",
-        "Grape",
-        "Carnivorous Plant",
-        "Mr carrot",
-        "Shroombino",
-        "Tomatrio",
-        "Mango"
-    },
-    Value = {},
+    Values = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
     Multi = true,
     AllowNone = true,
-    Callback = function(selected)
-        SelectedSellPlants = selected
-        if type(selected) == "table" then
-            print("Selected Plants to Sell: " .. game:GetService("HttpService"):JSONEncode(selected))
-        end
-    end
+    Callback = function(selected) SelectedSellPlants = selected end
 })
-
 TabSell:Paragraph({
     Title = "Sell Selected Plants",
     Desc = "Auto equip then sell the selected plants",
-    Locked = false,
-    Buttons = {
-        {
-            Icon = "hand",
-            Title = "Sell Plants",
-            Callback = function()
-                if type(SelectedSellPlants) == "table" and #SelectedSellPlants > 0 then
-                    local soldCount = 0
-                    
-                    for _, plant in ipairs(SelectedSellPlants) do
-                        local success = pcall(function()
-                            -- Equip plant first
-                            local player = game:GetService("Players").LocalPlayer
-                            local character = player.Character
-                            if character then
-                                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                                if humanoid then
-                                    -- Find plant in backpack or character
-                                    local plantItem = player.Backpack:FindFirstChild(plant) or character:FindFirstChild(plant)
-                                    if plantItem then
-                                        humanoid:EquipTool(plantItem)
-                                        task.wait(0.2) -- Wait for equip
-                                        
-                                        -- Sell the equipped plant
-                                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
-                                        soldCount = soldCount + 1
-                                        task.wait(0.2) -- Delay between sells
-                                    else
-                                        warn("✗ Plant not found: " .. plant)
-                                    end
-                                end
-                            end
-                        end)
-                        
-                        if not success then
-                            warn("✗ Failed to sell: " .. plant)
-                        end
+    Buttons = {{
+        Icon = "hand",
+        Title = "Sell Plants",
+        Callback = function()
+            if #SelectedSellPlants == 0 then return warn("✗ No plants selected!") end
+            for _, plant in ipairs(SelectedSellPlants) do
+                pcall(function()
+                    local character = player.Character
+                    local humanoid = character:FindFirstChildOfClass("Humanoid")
+                    local plantItem = player.Backpack:FindFirstChild(plant) or character:FindFirstChild(plant)
+                    if plantItem and humanoid then
+                        humanoid:EquipTool(plantItem)
+                        task.wait(0.2)
+                        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
+                        task.wait(0.2)
                     end
-                    
-                    print("✓ Sold " .. soldCount .. "/" .. #SelectedSellPlants .. " plants!")
-                else
-                    warn("✗ No plants selected!")
-                end
+                end)
             end
-        }
-    }
+            print("✓ Plants sold!")
+        end
+    }}
 })
 
--- TAB BRAINROT (in Game Section)
-local TabBrainrot = SectionGame:Tab({
-    Title = "Brainrot",
-    Icon = "skull"
-})
-
+-- Brainrot Tab
+local TabBrainrot = SectionGame:Tab({Title = "Brainrot", Icon = "skull"})
 TabBrainrot:Paragraph({
     Title = "Brainrot Manager",
     Desc = "Equip the best brainrots in your inventory",
-    Locked = false,
-    Buttons = {
-        {
-            Icon = "zap",
-            Title = "Equip Best",
-            Callback = function() 
-                local success, err = pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
-                end)
-                if success then
-                    print("✓ Equipped best brainrots!")
-                else
-                    warn("✗ Failed to equip brainrots:", err)
-                end
-            end
-        }
-    }
+    Buttons = {{
+        Icon = "zap",
+        Title = "Equip Best",
+        Callback = function()
+            pcall(function()
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
+                print("✓ Equipped best brainrots!")
+            end)
+        end
+    }}
 })
 
--- TAB EVENT (in Game Section)
-local TabEvent = SectionGame:Tab({
-    Title = "Event",
-    Icon = "gift"
-})
+-- Event Tab
+local TabEvent = SectionGame:Tab({Title = "Event", Icon = "gift"})
+TabEvent:Paragraph({Title = "Event Features", Desc = "Special event-related features and activities"})
 
-TabEvent:Paragraph({
-    Title = "Event Features",
-    Desc = "Special event-related features and activities",
-    Locked = false
-})
-
--- TAB MISC (in Settings Section)
-local TabMisc = SectionSettings:Tab({
-    Title = "Misc",
-    Icon = "settings"
-})
-
-TabMisc:Paragraph({
-    Title = "Miscellaneous Settings",
-    Desc = "Additional features and settings",
-    Locked = false
-})
-
+-- Misc Tab
+local TabMisc = SectionSettings:Tab({Title = "Misc", Icon = "settings"})
+TabMisc:Paragraph({Title = "Miscellaneous Settings", Desc = "Additional features and settings"})
 TabMisc:Paragraph({
     Title = "Performance Optimization",
     Desc = "Remove textures to reduce lag",
-    Locked = false,
-    Buttons = {
-        {
-            Icon = "zap",
-            Title = "Remove Textures",
-            Callback = function()
-                local removedCount = 0
-                
-                pcall(function()
-                    -- Remove textures from workspace
-                    for _, obj in pairs(Workspace:GetDescendants()) do
-                        if obj:IsA("Texture") or obj:IsA("Decal") then
-                            obj:Destroy()
-                            removedCount = removedCount + 1
-                        elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-                            obj.Enabled = false
-                            removedCount = removedCount + 1
-                        elseif obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("UnionOperation") then
-                            obj.Material = Enum.Material.SmoothPlastic
-                            obj.Reflectance = 0
-                            removedCount = removedCount + 1
-                        end
-                    end
-                    
-                    -- Reduce lighting effects
-                    local Lighting = game:GetService("Lighting")
-                    Lighting.GlobalShadows = false
-                    Lighting.FogEnd = 9e9
-                    Lighting.Brightness = 0
-                    
-                    -- Remove post-effects
-                    for _, effect in pairs(Lighting:GetChildren()) do
-                        if effect:IsA("PostEffect") then
-                            effect.Enabled = false
-                        end
-                    end
-                    
-                    -- Optimize terrain
-                    if Workspace:FindFirstChild("Terrain") then
-                        Workspace.Terrain.WaterWaveSize = 0
-                        Workspace.Terrain.WaterWaveSpeed = 0
-                        Workspace.Terrain.WaterReflectance = 0
-                        Workspace.Terrain.WaterTransparency = 0
-                    end
-                end)
-                
-                print("✓ Removed " .. removedCount .. " textures/effects! Game optimized for performance.")
-            end
-        }
-    }
-})
-
-TabMisc:Toggle({
-    Title = "Auto Remove New Textures",
-    Description = "Automatically remove textures from new objects",
-    Default = false,
-    Callback = function(value)
-        if value then
-            -- Auto remove textures from new descendants
-            Workspace.DescendantAdded:Connect(function(obj)
-                task.wait(0.1)
-                pcall(function()
+    Buttons = {{
+        Icon = "zap",
+        Title = "Remove Textures",
+        Callback = function()
+            pcall(function()
+                for _, obj in pairs(Workspace:GetDescendants()) do
                     if obj:IsA("Texture") or obj:IsA("Decal") then
                         obj:Destroy()
                     elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
@@ -640,107 +242,94 @@ TabMisc:Toggle({
                         obj.Material = Enum.Material.SmoothPlastic
                         obj.Reflectance = 0
                     end
+                end
+                local Lighting = game:GetService("Lighting")
+                Lighting.GlobalShadows = false
+                Lighting.FogEnd = 9e9
+                Lighting.Brightness = 0
+                for _, effect in pairs(Lighting:GetChildren()) do
+                    if effect:IsA("PostEffect") then effect.Enabled = false end
+                end
+            end)
+            print("✓ Game optimized!")
+        end
+    }}
+})
+
+TabMisc:Toggle({
+    Title = "Auto Remove New Textures",
+    Description = "Automatically remove textures from new objects",
+    Callback = function(value)
+        if value then
+            Workspace.DescendantAdded:Connect(function(obj)
+                task.wait(0.1)
+                pcall(function()
+                    if obj:IsA("Texture") or obj:IsA("Decal") then
+                        obj:Destroy()
+                    elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                        obj.Enabled = false
+                    end
                 end)
             end)
-            print("✓ Auto Remove Textures: ON")
-        else
-            print("✓ Auto Remove Textures: OFF")
         end
     end
 })
 
 -- Auto Buy Logic
 task.spawn(function()
+    local allSeeds = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"}
+    local allGears = {"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"}
+    
     while task.wait(0.5) do
-        -- Auto Buy Selected Seeds
-        if AutoBuySelectSeed and type(SelectedSeeds) == "table" and #SelectedSeeds > 0 then
+        if AutoBuySelectSeed and #SelectedSeeds > 0 then
             for _, seed in ipairs(SelectedSeeds) do
-                pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
-                end)
+                pcall(function() ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true) end)
                 task.wait(0.1)
             end
         end
-        
-        -- Auto Buy All Seeds
         if AutoBuyAllSeeds then
-            local allSeeds = {
-                "Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant",
-                "Watermelon", "Cocotank", "Grape", "Carnivorous Plant",
-                "Mr carrot", "Shroombino", "Tomatrio", "Mango"
-            }
             for _, seed in ipairs(allSeeds) do
-                pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true)
-                end)
+                pcall(function() ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seed .. " Seed", true) end)
                 task.wait(0.1)
             end
         end
-        
-        -- Auto Buy Selected Gears
-        if AutoBuySelectGear and type(SelectedGears) == "table" and #SelectedGears > 0 then
+        if AutoBuySelectGear and #SelectedGears > 0 then
             for _, gear in ipairs(SelectedGears) do
-                pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
-                end)
+                pcall(function() ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true) end)
                 task.wait(0.1)
             end
         end
-        
-        -- Auto Buy All Gears
         if AutoBuyAllGear then
-            local allGears = {
-                "Frost Grenade", "Frost Blower", "Banana Gun",
-                "Carrot Launcher", "Water Bucket"
-            }
             for _, gear in ipairs(allGears) do
-                pcall(function()
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true)
-                end)
+                pcall(function() ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyGear"):FireServer(gear, true) end)
                 task.wait(0.1)
             end
         end
     end
 end)
 
--- Auto Farm Logic with Bat Auto Clicker
+-- Auto Farm Logic
 task.spawn(function()
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
     local humanoid = character:WaitForChild("Humanoid")
     
-    -- Enhanced Bat Management
-    local rebirthBatList = {
-        "Basic Bat",
-        "Leather Grip Bat",
-        "Iron Plate Bat",
-        "Iron Core Bat",
-        "Aluminum Bat"
-    }
-    
+    local rebirthBatList = {"Basic Bat", "Leather Grip Bat", "Iron Plate Bat", "Iron Core Bat", "Aluminum Bat"}
     local currentEquippedBat = nil
     
     local function getBestBat()
         local backpack = player:FindFirstChild("Backpack")
-        
         if not character or not backpack then return nil end
-        
         for i = #rebirthBatList, 1, -1 do
             local bat = character:FindFirstChild(rebirthBatList[i]) or backpack:FindFirstChild(rebirthBatList[i])
             if bat then return bat end
         end
-        
         return nil
     end
     
     local function autoEquipBestBat()
         local backpack = player:FindFirstChild("Backpack")
-        
-        if not character or not backpack then return false end
-        
-        if not humanoid then return false end
-        
-        -- Check if best bat is already equipped
+        if not character or not backpack or not humanoid then return false end
         for i = #rebirthBatList, 1, -1 do
             local bat = character:FindFirstChild(rebirthBatList[i])
             if bat then
@@ -748,8 +337,6 @@ task.spawn(function()
                 return true
             end
         end
-        
-        -- Equip best bat from backpack
         for i = #rebirthBatList, 1, -1 do
             local bat = backpack:FindFirstChild(rebirthBatList[i])
             if bat then
@@ -760,35 +347,25 @@ task.spawn(function()
                 return true
             end
         end
-        
         return false
     end
     
-    -- Optimized attack system
+    -- Attack system
     local attackQueue = {}
     local isAttacking = false
-    local ATTACK_INTERVAL = 0.01
     
     task.spawn(function()
         local attackRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AttacksServer"):WaitForChild("WeaponAttack")
-        
         while true do
-            task.wait(ATTACK_INTERVAL)
-            
+            task.wait(0.01)
             if #attackQueue > 0 and not isAttacking and AutoFarmEnabled then
                 isAttacking = true
-                
                 local targetName = table.remove(attackQueue, 1)
-                
                 pcall(function()
                     local bat = currentEquippedBat or getBestBat()
-                    if bat and bat.Parent == character then
-                        bat:Activate()
-                    end
-                    
+                    if bat and bat.Parent == character then bat:Activate() end
                     attackRemote:FireServer({targetName})
                 end)
-                
                 isAttacking = false
             elseif not AutoFarmEnabled then
                 attackQueue = {}
@@ -796,29 +373,24 @@ task.spawn(function()
         end
     end)
     
-    -- Auto equip best bat loop (only when targeting brainrot)
+    -- Auto equip bat
     task.spawn(function()
         while true do
             if AutoFarmEnabled then
                 local brainrotsFolder = Workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
-                local hasTargetBrainrot = false
-                
-                -- Check if there's a valid target brainrot
+                local hasTarget = false
                 for _, b in ipairs(brainrotsFolder:GetChildren()) do
                     if b:IsA("Model") then
                         local rarity = b:GetAttribute("Rarity")
                         if rarity and table.find(SelectedRarities, rarity) then
-                            hasTargetBrainrot = true
+                            hasTarget = true
                             break
                         end
                     end
                 end
-                
-                -- Only equip bat if there's a target brainrot
-                if hasTargetBrainrot then
+                if hasTarget then
                     autoEquipBestBat()
                 else
-                    -- Unequip bat if no target
                     if currentEquippedBat and currentEquippedBat.Parent == character then
                         pcall(function()
                             humanoid:UnequipTools()
@@ -866,14 +438,13 @@ task.spawn(function()
     
     local Clip = true
     local NoclipConnection
-    local floatName = "HumanoidRootPart"
     
     local function noclip()
         Clip = false
         NoclipConnection = RunService.Stepped:Connect(function()
             if not Clip and character then
                 for _, v in pairs(character:GetDescendants()) do
-                    if v:IsA("BasePart") and v.CanCollide and v.Name ~= floatName then
+                    if v:IsA("BasePart") and v.CanCollide and v.Name ~= "HumanoidRootPart" then
                         v.CanCollide = false
                     end
                 end
@@ -910,13 +481,7 @@ task.spawn(function()
                 if bp then
                     humanoid:EquipTool(tool)
                     local useItemRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseItem")
-                    local args = {{
-                        Toggle = true,
-                        Tool = tool,
-                        Time = 0.5,
-                        Pos = Vector3.new(bp.Position.X, bp.Position.Y, bp.Position.Z)
-                    }}
-                    useItemRemote:FireServer(unpack(args))
+                    useItemRemote:FireServer({{Toggle = true, Tool = tool, Time = 0.5, Pos = bp.Position}})
                 end
             end
         end
@@ -965,23 +530,18 @@ task.spawn(function()
                         local progress = targetBrainrot:GetAttribute("Progress") or 0
                         if progress > 0.6 then
                             local tool = findFrostGrenade()
-                            if tool then
-                                humanoid:EquipTool(tool)
-                            end
+                            if tool then humanoid:EquipTool(tool) end
                         end
                         local now = tick()
                         if now - lastFire >= FIRE_INTERVAL then
                             fireFrostGrenade(targetBrainrot)
                             lastFire = now
                         end
-                        
-                        -- Add brainrot to attack queue for optimized bat attacks (spam multiple times)
                         if targetBrainrot.Name then
                             for i = 1, 3 do
                                 table.insert(attackQueue, targetBrainrot.Name)
                             end
                         end
-                        
                         task.wait(0.01)
                     end
                     humanoid:UnequipTools()
@@ -1002,10 +562,10 @@ task.spawn(function()
     while true do
         if AutoFarmMoneyEnabled then
             pcall(function()
-                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
-                print("✓ Equipped best brainrots for farming!")
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("EquipBestBrainrots"):FireServer()
+                print("✓ Equipped best brainrots!")
             end)
-            task.wait(10) -- Wait 10 seconds before next equip
+            task.wait(10)
         else
             task.wait(1)
         end
