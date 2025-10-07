@@ -308,7 +308,7 @@ task.spawn(function()
     end
 end)
 
--- Auto Farm Logic
+-- Auto Farm Logic (FIXED)
 task.spawn(function()
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
@@ -316,6 +316,8 @@ task.spawn(function()
     
     local rebirthBatList = {"Basic Bat", "Leather Grip Bat", "Iron Plate Bat", "Iron Core Bat", "Aluminum Bat"}
     local currentEquippedBat = nil
+    local lastBatEquipTime = 0
+    local BAT_EQUIP_COOLDOWN = 3 -- 3 second cooldown
     
     local function getBestBat()
         local backpack = player:FindFirstChild("Backpack")
@@ -328,21 +330,30 @@ task.spawn(function()
     end
     
     local function autoEquipBestBat()
+        local now = tick()
+        if now - lastBatEquipTime < BAT_EQUIP_COOLDOWN then
+            return false
+        end
+        
         local backpack = player:FindFirstChild("Backpack")
         if not character or not backpack or not humanoid then return false end
+        
         for i = #rebirthBatList, 1, -1 do
             local bat = character:FindFirstChild(rebirthBatList[i])
             if bat then
                 currentEquippedBat = bat
+                lastBatEquipTime = now
                 return true
             end
         end
+        
         for i = #rebirthBatList, 1, -1 do
             local bat = backpack:FindFirstChild(rebirthBatList[i])
             if bat then
                 pcall(function()
                     humanoid:EquipTool(bat)
                     currentEquippedBat = bat
+                    lastBatEquipTime = now
                 end)
                 return true
             end
@@ -350,14 +361,14 @@ task.spawn(function()
         return false
     end
     
-    -- Attack system
+    -- Attack system - SUPER FAST 500/s
     local attackQueue = {}
     local isAttacking = false
     
     task.spawn(function()
         local attackRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AttacksServer"):WaitForChild("WeaponAttack")
         while true do
-            task.wait(0.01)
+            task.wait(0.002) -- 500 attacks per second (1/500 = 0.002)
             if #attackQueue > 0 and not isAttacking and AutoFarmEnabled then
                 isAttacking = true
                 local targetName = table.remove(attackQueue, 1)
@@ -373,7 +384,7 @@ task.spawn(function()
         end
     end)
     
-    -- Auto equip bat
+    -- Auto equip bat with cooldown
     task.spawn(function()
         while true do
             if AutoFarmEnabled then
@@ -482,6 +493,8 @@ task.spawn(function()
                     humanoid:EquipTool(tool)
                     local useItemRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseItem")
                     useItemRemote:FireServer({{Toggle = true, Tool = tool, Time = 0.5, Pos = bp.Position}})
+                    task.wait(0.3)
+                    autoEquipBestBat()
                 end
             end
         end
@@ -528,17 +541,20 @@ task.spawn(function()
                     while targetBrainrot.Parent and AutoFarmEnabled do
                         bodyPos.Position = targetPart.Position
                         local progress = targetBrainrot:GetAttribute("Progress") or 0
-                        if progress > 0.6 then
-                            local tool = findFrostGrenade()
-                            if tool then humanoid:EquipTool(tool) end
-                        end
                         local now = tick()
                         if now - lastFire >= FIRE_INTERVAL then
                             fireFrostGrenade(targetBrainrot)
                             lastFire = now
+                        else
+                            if progress <= 0.6 then
+                                local tool = findFrostGrenade()
+                                if tool then humanoid:EquipTool(tool) end
+                            else
+                                autoEquipBestBat()
+                            end
                         end
                         if targetBrainrot.Name then
-                            for i = 1, 3 do
+                            for i = 1, 10 do -- Spam 10 attacks per loop for super speed
                                 table.insert(attackQueue, targetBrainrot.Name)
                             end
                         end
