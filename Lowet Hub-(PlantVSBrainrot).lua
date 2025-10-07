@@ -3,14 +3,14 @@ local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footag
 WindUI:AddTheme({
     Name = "POWER",
     
-    Accent = Color3.fromHex("#18181b"),
-    Dialog = Color3.fromHex("#161616"),
-    Outline = Color3.fromHex("#FFFFFF"),
+    Accent = Color3.fromHex("#ff6b35"),
+    Dialog = Color3.fromHex("#1a1a1a"),
+    Outline = Color3.fromHex("#ff8c42"),
     Text = Color3.fromHex("#FFFFFF"),
-    Placeholder = Color3.fromHex("#7a7a7a"),
-    Background = Color3.fromHex("#101010"),
-    Button = Color3.fromHex("#52525b"),
-    Icon = Color3.fromHex("#a1a1aa")
+    Placeholder = Color3.fromHex("#b8b8b8"),
+    Background = Color3.fromHex("#0f0f0f"),
+    Button = Color3.fromHex("#ff6b35"),
+    Icon = Color3.fromHex("#ffa552")
 })
 
 WindUI:SetTheme("POWER")
