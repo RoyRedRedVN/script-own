@@ -516,6 +516,18 @@ TabBrainrot:Paragraph({
     }
 })
 
+-- TAB EVENT (in Game Section)
+local TabEvent = SectionGame:Tab({
+    Title = "Event",
+    Icon = "gift"
+})
+
+TabEvent:Paragraph({
+    Title = "Event Features",
+    Desc = "Special event-related features and activities",
+    Locked = false
+})
+
 -- TAB MISC (in Settings Section)
 local TabMisc = SectionSettings:Tab({
     Title = "Misc",
