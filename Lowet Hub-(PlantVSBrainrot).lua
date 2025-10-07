@@ -3,14 +3,14 @@ local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footag
 WindUI:AddTheme({
     Name = "POWER",
     
-    Accent = Color3.fromHex("#ff6b35"),
-    Dialog = Color3.fromHex("#1a1a1a"),
-    Outline = Color3.fromHex("#ff8c42"),
-    Text = Color3.fromHex("#FFFFFF"),
-    Placeholder = Color3.fromHex("#b8b8b8"),
-    Background = Color3.fromHex("#0f0f0f"),
-    Button = Color3.fromHex("#ff6b35"),
-    Icon = Color3.fromHex("#ffa552")
+    Accent = Color3.fromRGB(255, 107, 53),
+    Dialog = Color3.fromRGB(26, 26, 26),
+    Outline = Color3.fromRGB(255, 140, 66),
+    Text = Color3.fromRGB(255, 255, 255),
+    Placeholder = Color3.fromRGB(184, 184, 184),
+    Background = Color3.fromRGB(15, 15, 15),
+    Button = Color3.fromRGB(255, 107, 53),
+    Icon = Color3.fromRGB(255, 165, 82)
 })
 
 WindUI:SetTheme("POWER")
@@ -19,6 +19,11 @@ local Window = WindUI:CreateWindow({
     Title = "Lowet Hub",
     Icon = "door-open",
     Author = "by RedMod",
+    Folder = "LowetHub",
+    
+    Transparent = true,
+    Theme = "POWER",
+    Resizable = true,
 })
 
 -- Section Main for Home
