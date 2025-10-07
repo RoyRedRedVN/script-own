@@ -33,8 +33,8 @@ Window:EditOpenButton({
     Draggable = true,
 })
 
-Window.Icon:SetAnonymous(false)
 Window:Tag({Title = "V1.0", Color = Color3.fromRGB(255, 107, 53), Radius = 13})
+Window:Tag({Title = "BETA", Color = Color3.fromRGB(255, 140, 66), Radius = 13})
 
 -- Services
 local Players = game:GetService("Players")
