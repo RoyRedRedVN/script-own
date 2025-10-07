@@ -542,7 +542,7 @@ task.spawn(function()
                                 table.insert(attackQueue, targetBrainrot.Name)
                             end
                         end
-                        task.wait(0.001)
+                        task.wait(0.0001)
                     end
                     humanoid:UnequipTools()
                     bodyPos:Destroy()
