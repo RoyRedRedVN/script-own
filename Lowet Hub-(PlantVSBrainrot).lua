@@ -26,6 +26,14 @@ local Window = WindUI:CreateWindow({
     Resizable = true,
 })
 
+Window.Icon:SetAnonymous(false)
+
+Window:Tag({
+    Title = "Demo",
+    Color = Color3.fromHex("#30ff6a"),
+    Radius = 0, -- from 0 to 13
+})
+
 Window:EditOpenButton({
     Title = "Open Hub",
     Icon = "monitor",
