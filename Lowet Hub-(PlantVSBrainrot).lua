@@ -4,11 +4,11 @@ WindUI:AddTheme({
     Name = "POWER",
     
     Accent = Color3.fromRGB(255, 107, 53),
-    Dialog = Color3.fromRGB(26, 26, 26),
+    Dialog = Color3.fromRGB(40, 20, 10),
     Outline = Color3.fromRGB(255, 140, 66),
     Text = Color3.fromRGB(255, 255, 255),
     Placeholder = Color3.fromRGB(184, 184, 184),
-    Background = Color3.fromRGB(15, 15, 15),
+    Background = Color3.fromRGB(50, 25, 10),
     Button = Color3.fromRGB(255, 107, 53),
     Icon = Color3.fromRGB(255, 165, 82)
 })
@@ -24,6 +24,20 @@ local Window = WindUI:CreateWindow({
     Transparent = true,
     Theme = "POWER",
     Resizable = true,
+})
+
+Window:EditOpenButton({
+    Title = "Open Hub",
+    Icon = "monitor",
+    CornerRadius = UDim.new(0, 16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(
+        Color3.fromRGB(255, 107, 53), 
+        Color3.fromRGB(255, 140, 66)
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
 })
 
 -- Section Main for Home
