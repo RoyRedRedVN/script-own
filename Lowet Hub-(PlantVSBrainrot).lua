@@ -150,15 +150,40 @@ TabGear:Toggle({Title = "Auto Buy All Gears", Callback = function(v) Config.Auto
 -- Sell Tab
 local TabSell = SectionGame:Tab({Title = "Sell", Icon = "dollar-sign"})
 TabSell:Paragraph({Title = "💰 Auto Sell Manager", Desc = "Automated selling system"})
-TabSell:Toggle({Title = "Auto Sell Brainrots", Callback = function(v) Config.SellBrainrot = v end})
-TabSell:Toggle({Title = "Auto Sell Plants", Callback = function(v) Config.SellPlant = v end})
-TabSell:Toggle({Title = "Auto Sell Everything", Callback = function(v) Config.SellEverything = v end})
+TabSell:Toggle({
+    Title = "Auto Sell Brainrots",
+    Description = "Keep equipped, auto sell brainrots",
+    Callback = function(v) 
+        Config.SellBrainrot = v 
+        if v then Config.SellPlant = false end
+        Notify(v and "Auto sell brainrots enabled!" or "Auto sell brainrots disabled")
+    end
+})
+TabSell:Toggle({
+    Title = "Auto Sell Plants", 
+    Description = "Keep equipped, auto sell plants",
+    Callback = function(v) 
+        Config.SellPlant = v 
+        if v then Config.SellBrainrot = false end
+        Notify(v and "Auto sell plants enabled!" or "Auto sell plants disabled")
+    end
+})
+TabSell:Toggle({
+    Title = "Auto Sell Everything",
+    Description = "Sell both brainrots and plants",
+    Callback = function(v) 
+        Config.SellEverything = v 
+        Notify(v and "Auto sell everything enabled!" or "Auto sell everything disabled")
+    end
+})
 TabSell:Paragraph({
     Title = "Manual Sell",
     Desc = "One-time sell operations",
     Buttons = {
-        {Icon = "trash-2", Title = "Sell Brainrots", Callback = function() SafeCall(function() GetRemote("ItemSell"):FireServer() end) Notify("Brainrots sold!") end},
-        {Icon = "leaf", Title = "Sell Plants", Callback = function() SafeCall(function() GetRemote("ItemSell"):FireServer() end) Notify("Plants sold!") end}
+        {Icon = "trash-2", Title = "Sell Items Now", Callback = function() 
+            SafeCall(function() GetRemote("ItemSell"):FireServer() end) 
+            Notify("Items sold!") 
+        end}
     }
 })
 
@@ -179,14 +204,18 @@ TabBrainrot:Paragraph({
 
 -- Auto Collect Tab
 local TabCollect = SectionGame:Tab({Title = "Auto Collect", Icon = "hand-coins"})
-TabCollect:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money"})
+TabCollect:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money from plot"})
 TabCollect:Slider({
     Title = "Collect Delay (sec)",
     Value = {Min = 1, Max = 60, Default = 5},
     Step = 1,
     Callback = function(v) Config.CollectDelay = v end
 })
-TabCollect:Toggle({Title = "Auto Collect Money", Callback = function(v) Config.AutoCollect = v end})
+TabCollect:Toggle({
+    Title = "Auto Collect Money (Event)",
+    Description = "Use event-based collection (faster & safer)",
+    Callback = function(v) Config.AutoCollect = v end
+})
 
 -- Misc Tab
 local TabMisc = SectionSettings:Tab({Title = "Misc", Icon = "settings"})
@@ -439,54 +468,21 @@ task.spawn(function()
     end
 end)
 
--- Auto Collect System
+-- Auto Collect System (Event-based)
 task.spawn(function()
-    local function GetNearestPlot()
-        local character = player.Character
-        if not character then return nil end
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return nil end
-        local nearest, minDist = nil, math.huge
-        for _, plot in ipairs(Workspace:WaitForChild("Plots"):GetChildren()) do
-            if plot:IsA("Folder") then
-                local center = plot:FindFirstChild("Center") or plot:FindFirstChildWhichIsA("BasePart")
-                if center then
-                    local dist = (hrp.Position - center.Position).Magnitude
-                    if dist < minDist then minDist = dist nearest = plot end
-                end
-            end
-        end
-        return nearest
-    end
-    
-    local function CollectFromPlot(plot)
-        if not plot then return end
-        local brainrotsFolder = plot:FindFirstChild("Brainrots")
-        if not brainrotsFolder then return end
-        local character = player.Character
-        if not character then return end
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        for i = 1, 17 do
-            local slot = brainrotsFolder:FindFirstChild(tostring(i))
-            if slot and slot:FindFirstChild("Brainrot") then
-                local brainrot = slot:FindFirstChild("Brainrot")
-                if brainrot:FindFirstChild("BrainrotHitbox") then
-                    local hitbox = brainrot.BrainrotHitbox
-                    hrp.CFrame = CFrame.new(hitbox.Position + Vector3.new(0, 1, 3), hitbox.Position)
-                    task.wait(0.2)
-                    SafeCall(function() GetRemote("AttacksServer"):WaitForChild("WeaponAttack"):FireServer({{target = hitbox}}) end)
-                end
-            end
-        end
-    end
-    
     while true do
         if Config.AutoCollect then
-            local plot = GetNearestPlot()
-            if plot then CollectFromPlot(plot) end
+            SafeCall(function()
+                local bn = ReplicatedStorage:FindFirstChild("BridgeNet2")
+                if bn and bn:FindFirstChild("dataRemoteEvent") then
+                    local args = {{[2] = "\004"}}
+                    bn.dataRemoteEvent:FireServer(unpack(args))
+                end
+            end)
             task.wait(Config.CollectDelay)
-        else task.wait(1) end
+        else
+            task.wait(1)
+        end
     end
 end)
 
