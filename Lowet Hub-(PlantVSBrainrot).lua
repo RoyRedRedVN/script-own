@@ -1,4 +1,4 @@
--- Lowet Hub V1.0 - Optimized
+-- Lowet Hub V1.0 - Optimized & Restructured
 repeat task.wait() until game:IsLoaded()
 if setfpscap then setfpscap(1000000) end
 
@@ -52,10 +52,8 @@ local player = Players.LocalPlayer
 local Config = {
     AutoFarm = false,
     AutoMoney = false,
-    AutoCollect = false,
     SellBrainrot = false,
     SellPlant = false,
-    SellEverything = false,
     SelectedRarities = {"Secret", "Limited"},
     SelectedSeeds = {},
     SelectedGears = {},
@@ -63,7 +61,8 @@ local Config = {
     AutoBuyGears = false,
     AutoBuyAllSeeds = false,
     AutoBuyAllGears = false,
-    CollectDelay = 5
+    AutoCollectDelay = 5,
+    AutoCollectEnabled = false
 }
 
 local Constants = {
@@ -74,14 +73,24 @@ local Constants = {
 }
 
 -- Utils
-local function Notify(msg) WindUI:Notify({
-    Title = "Notification",
-    Content = msg,
-    Duration = 3, -- 3 seconds
-    Icon = "house",
-}) end
+local function Notify(msg) 
+    WindUI:Notify({
+        Title = "Notification",
+        Content = msg,
+        Duration = 3,
+        Icon = "house",
+    }) 
+end
+
 local function SafeCall(func) pcall(func) end
-local function GetRemote(path) return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild(path) end
+
+local function GetRemote(path) 
+    return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild(path) 
+end
+
+local function GetBridgeNet2()
+    return ReplicatedStorage:FindFirstChild("BridgeNet2")
+end
 
 -- Sections
 local SectionMain = Window:Section({Title = "Main", Icon = "house", Opened = true})
@@ -126,69 +135,99 @@ TabAutoFarm:Toggle({
     Callback = function(v) Config.AutoMoney = v end
 })
 
--- Seeds Tab
-local TabSeeds = SectionGame:Tab({Title = "Seeds", Icon = "sprout"})
-TabSeeds:Paragraph({Title = "🌱 Seeds Manager", Desc = "Automated seed purchasing"})
-TabSeeds:Dropdown({
+-- Auto Buy Tab (Combined Seeds & Gears)
+local TabAutoBuy = SectionGame:Tab({Title = "Auto Buy", Icon = "shopping-cart"})
+
+-- Seeds Section
+local SectionSeeds = TabAutoBuy:Section({
+    Title = "Seeds Shop",
+    Box = false,
+    FontWeight = "SemiBold",
+    TextTransparency = 0.05,
+    TextXAlignment = "Left",
+    TextSize = 17,
+    Opened = true,
+})
+
+SectionSeeds:Paragraph({Title = "🌱 Seeds Manager", Desc = "Automated seed purchasing"})
+SectionSeeds:Dropdown({
     Title = "Select Seeds",
     Values = Constants.Seeds,
     Multi = true,
     AllowNone = true,
     Callback = function(v) Config.SelectedSeeds = v end
 })
-TabSeeds:Toggle({Title = "Auto Buy Selected Seeds", Callback = function(v) Config.AutoBuySeeds = v end})
-TabSeeds:Toggle({Title = "Auto Buy All Seeds", Callback = function(v) Config.AutoBuyAllSeeds = v end})
+SectionSeeds:Toggle({
+    Title = "Auto Buy Selected Seeds", 
+    Callback = function(v) Config.AutoBuySeeds = v end
+})
+SectionSeeds:Toggle({
+    Title = "Auto Buy All Seeds", 
+    Callback = function(v) Config.AutoBuyAllSeeds = v end
+})
 
--- Gear Tab
-local TabGear = SectionGame:Tab({Title = "Gear", Icon = "wrench"})
-TabGear:Paragraph({Title = "⚙️ Gear Shop", Desc = "Automated gear purchasing"})
-TabGear:Dropdown({
+-- Gears Section
+local SectionGears = TabAutoBuy:Section({
+    Title = "Gears Shop",
+    Box = false,
+    FontWeight = "SemiBold",
+    TextTransparency = 0.05,
+    TextXAlignment = "Left",
+    TextSize = 17,
+    Opened = true,
+})
+
+SectionGears:Paragraph({Title = "⚙️ Gear Shop", Desc = "Automated gear purchasing"})
+SectionGears:Dropdown({
     Title = "Select Gears",
     Values = Constants.Gears,
     Multi = true,
     AllowNone = true,
     Callback = function(v) Config.SelectedGears = v end
 })
-TabGear:Toggle({Title = "Auto Buy Selected Gears", Callback = function(v) Config.AutoBuyGears = v end})
-TabGear:Toggle({Title = "Auto Buy All Gears", Callback = function(v) Config.AutoBuyAllGears = v end})
+SectionGears:Toggle({
+    Title = "Auto Buy Selected Gears", 
+    Callback = function(v) Config.AutoBuyGears = v end
+})
+SectionGears:Toggle({
+    Title = "Auto Buy All Gears", 
+    Callback = function(v) Config.AutoBuyAllGears = v end
+})
 
--- Sell Tab
+-- Sell Tab (Separated)
 local TabSell = SectionGame:Tab({Title = "Sell", Icon = "dollar-sign"})
 TabSell:Paragraph({Title = "💰 Auto Sell Manager", Desc = "Automated selling system"})
+
 TabSell:Toggle({
     Title = "Auto Sell Brainrots",
-    Description = "Keep equipped, auto sell brainrots",
+    Description = "Keep equipped, auto sell brainrots only",
     Callback = function(v) 
         Config.SellBrainrot = v 
-        if v then Config.SellPlant = false end
         Notify(v and "Auto sell brainrots enabled!" or "Auto sell brainrots disabled")
     end
 })
+
 TabSell:Toggle({
     Title = "Auto Sell Plants", 
-    Description = "Keep equipped, auto sell plants",
+    Description = "Keep equipped, auto sell plants only",
     Callback = function(v) 
         Config.SellPlant = v 
-        if v then Config.SellBrainrot = false end
         Notify(v and "Auto sell plants enabled!" or "Auto sell plants disabled")
     end
 })
-TabSell:Toggle({
-    Title = "Auto Sell Everything",
-    Description = "Sell both brainrots and plants",
-    Callback = function(v) 
-        Config.SellEverything = v 
-        Notify(v and "Auto sell everything enabled!" or "Auto sell everything disabled")
-    end
-})
+
 TabSell:Paragraph({
     Title = "Manual Sell",
     Desc = "One-time sell operations",
     Buttons = {
-        {Icon = "trash-2", Title = "Sell Items Now", Callback = function() 
-            SafeCall(function() GetRemote("ItemSell"):FireServer() end) 
-            Notify("Items sold!") 
-        end}
+        {
+            Icon = "trash-2", 
+            Title = "Sell Items Now", 
+            Callback = function() 
+                SafeCall(function() GetRemote("ItemSell"):FireServer() end) 
+                Notify("Items sold!") 
+            end
+        }
     }
 })
 
@@ -207,19 +246,30 @@ TabBrainrot:Paragraph({
     }}
 })
 
--- Auto Collect Tab
-local TabCollect = SectionGame:Tab({Title = "Auto Collect", Icon = "hand-coins"})
-TabCollect:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money from plot"})
-TabCollect:Slider({
+-- Event Tab (Auto Collect)
+local TabEvent = SectionGame:Tab({Title = "Event", Icon = "hand-coins"})
+
+local SectionCollect = TabEvent:Section({
+    Title = "Auto Collect Money",
+    Box = false,
+    FontWeight = "SemiBold",
+    TextTransparency = 0.05,
+    TextXAlignment = "Left",
+    TextSize = 17,
+    Opened = true,
+})
+
+SectionCollect:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money from plot"})
+SectionCollect:Slider({
     Title = "Collect Delay (sec)",
     Value = {Min = 1, Max = 60, Default = 5},
     Step = 1,
-    Callback = function(v) Config.CollectDelay = v end
+    Callback = function(v) Config.AutoCollectDelay = v end
 })
-TabCollect:Toggle({
+SectionCollect:Toggle({
     Title = "Auto Collect Money (Event)",
     Description = "Use event-based collection (faster & safer)",
-    Callback = function(v) Config.AutoCollect = v end
+    Callback = function(v) Config.AutoCollectEnabled = v end
 })
 
 -- Misc Tab
@@ -234,15 +284,24 @@ TabMisc:Paragraph({
         Callback = function()
             SafeCall(function()
                 for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj:IsA("Texture") or obj:IsA("Decal") then obj:Destroy()
-                    elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then obj.Enabled = false
-                    elseif obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("UnionOperation") then obj.Material = Enum.Material.SmoothPlastic obj.Reflectance = 0 end
+                    if obj:IsA("Texture") or obj:IsA("Decal") then 
+                        obj:Destroy()
+                    elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then 
+                        obj.Enabled = false
+                    elseif obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("UnionOperation") then 
+                        obj.Material = Enum.Material.SmoothPlastic 
+                        obj.Reflectance = 0 
+                    end
                 end
                 local Lighting = game:GetService("Lighting")
                 Lighting.GlobalShadows = false
                 Lighting.FogEnd = 9e9
                 Lighting.Brightness = 0
-                for _, effect in pairs(Lighting:GetChildren()) do if effect:IsA("PostEffect") then effect.Enabled = false end end
+                for _, effect in pairs(Lighting:GetChildren()) do 
+                    if effect:IsA("PostEffect") then 
+                        effect.Enabled = false 
+                    end 
+                end
             end)
             Notify("Game optimized!")
         end
@@ -252,38 +311,77 @@ TabMisc:Paragraph({
 -- Auto Buy System
 task.spawn(function()
     while task.wait(0.5) do
+        local bn = GetBridgeNet2()
+        
         if Config.AutoBuySeeds and #Config.SelectedSeeds > 0 then
             for _, seed in ipairs(Config.SelectedSeeds) do
-                SafeCall(function() GetRemote("BuyItem"):FireServer(seed .. " Seed", true) end)
+                local args = {{seed .. " Seed", "\b"}}
+                if bn and bn:FindFirstChild("dataRemoteEvent") then
+                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
+                end
                 task.wait(0.1)
             end
         end
+        
         if Config.AutoBuyAllSeeds then
             for _, seed in ipairs(Constants.Seeds) do
-                SafeCall(function() GetRemote("BuyItem"):FireServer(seed .. " Seed", true) end)
+                local args = {{seed .. " Seed", "\b"}}
+                if bn and bn:FindFirstChild("dataRemoteEvent") then
+                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
+                end
                 task.wait(0.1)
             end
         end
+        
         if Config.AutoBuyGears and #Config.SelectedGears > 0 then
             for _, gear in ipairs(Config.SelectedGears) do
-                SafeCall(function() GetRemote("BuyGear"):FireServer(gear, true) end)
+                local args = {{gear, "\026"}}
+                if bn and bn:FindFirstChild("dataRemoteEvent") then
+                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
+                end
                 task.wait(0.1)
             end
         end
+        
         if Config.AutoBuyAllGears then
             for _, gear in ipairs(Constants.Gears) do
-                SafeCall(function() GetRemote("BuyGear"):FireServer(gear, true) end)
+                local args = {{gear, "\026"}}
+                if bn and bn:FindFirstChild("dataRemoteEvent") then
+                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
+                end
                 task.wait(0.1)
             end
         end
     end
 end)
 
--- Auto Sell System
+-- Auto Sell System (Separated)
 task.spawn(function()
     while true do
         task.wait(0.69)
-        if Config.SellBrainrot or Config.SellPlant or Config.SellEverything then
+        
+        -- Sell Brainrots Only
+        if Config.SellBrainrot and not Config.SellPlant then
+            SafeCall(function()
+                local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+                if remotes and remotes:FindFirstChild("ItemSell") then
+                    remotes.ItemSell:FireServer()
+                end
+            end)
+        end
+        
+        -- Sell Plants Only
+        if Config.SellPlant and not Config.SellBrainrot then
+            SafeCall(function()
+                local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+                if remotes and remotes:FindFirstChild("ItemSell") then
+                    remotes.ItemSell:FireServer()
+                end
+            end)
+        end
+        
+        -- Sell Both (if both toggles are on)
+        if Config.SellBrainrot and Config.SellPlant then
             SafeCall(function()
                 local remotes = ReplicatedStorage:FindFirstChild("Remotes")
                 if remotes and remotes:FindFirstChild("ItemSell") then
@@ -469,22 +567,27 @@ end)
 -- Auto Money System
 task.spawn(function()
     while true do
-        if Config.AutoMoney then SafeCall(function() GetRemote("EquipBestBrainrots"):FireServer() end) task.wait(10) else task.wait(1) end
+        if Config.AutoMoney then 
+            SafeCall(function() GetRemote("EquipBestBrainrots"):FireServer() end) 
+            task.wait(10) 
+        else 
+            task.wait(1) 
+        end
     end
 end)
 
 -- Auto Collect System (Event-based)
 task.spawn(function()
     while true do
-        if Config.AutoCollect then
+        if Config.AutoCollectEnabled then
             SafeCall(function()
-                local bn = ReplicatedStorage:FindFirstChild("BridgeNet2")
+                local bn = GetBridgeNet2()
                 if bn and bn:FindFirstChild("dataRemoteEvent") then
                     local args = {{[2] = "\004"}}
                     bn.dataRemoteEvent:FireServer(unpack(args))
                 end
             end)
-            task.wait(Config.CollectDelay)
+            task.wait(Config.AutoCollectDelay)
         else
             task.wait(1)
         end
