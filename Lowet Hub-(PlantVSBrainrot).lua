@@ -74,7 +74,12 @@ local Constants = {
 }
 
 -- Utils
-local function Notify(msg) print("✓ " .. msg) end
+local function Notify(msg) WindUI:Notify({
+    Title = "Notification",
+    Content = msg,
+    Duration = 3, -- 3 seconds
+    Icon = "house",
+}) end
 local function SafeCall(func) pcall(func) end
 local function GetRemote(path) return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild(path) end
 
