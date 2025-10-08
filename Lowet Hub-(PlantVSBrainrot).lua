@@ -92,13 +92,16 @@ local function GetBridgeNet2()
     return ReplicatedStorage:FindFirstChild("BridgeNet2")
 end
 
--- Sections
-local SectionMain = Window:Section({Title = "Main", Icon = "house", Opened = true})
-local SectionGame = Window:Section({Title = "Game", Icon = "gamepad-2", Opened = true})
-local SectionSettings = Window:Section({Title = "Settings", Icon = "settings", Opened = true})
+-- Tabs
+local TabHome = Window:Tab({Title = "Home", Icon = "house"})
+local TabAutoFarm = Window:Tab({Title = "Auto Farm", Icon = "zap"})
+local TabAutoBuy = Window:Tab({Title = "Auto Buy", Icon = "shopping-cart"})
+local TabSell = Window:Tab({Title = "Sell", Icon = "dollar-sign"})
+local TabBrainrot = Window:Tab({Title = "Brainrot", Icon = "skull"})
+local TabEvent = Window:Tab({Title = "Event", Icon = "hand-coins"})
+local TabMisc = Window:Tab({Title = "Misc", Icon = "settings"})
 
 -- Home Tab
-local TabHome = SectionMain:Tab({Title = "Home", Icon = "house"})
 TabHome:Paragraph({Title = "Welcome to Lowet Hub! 🎮", Desc = "Premium features for gameplay"})
 TabHome:Paragraph({
     Title = "Discord Community",
@@ -114,7 +117,6 @@ TabHome:Paragraph({
 })
 
 -- Auto Farm Tab
-local TabAutoFarm = SectionGame:Tab({Title = "Auto Farm", Icon = "zap"})
 TabAutoFarm:Paragraph({Title = "🚀 Auto Farm System", Desc = "Intelligent farming with auto-combat"})
 TabAutoFarm:Dropdown({
     Title = "Target Rarities",
@@ -135,67 +137,44 @@ TabAutoFarm:Toggle({
     Callback = function(v) Config.AutoMoney = v end
 })
 
--- Auto Buy Tab (Combined Seeds & Gears)
-local TabAutoBuy = SectionGame:Tab({Title = "Auto Buy", Icon = "shopping-cart"})
-
--- Seeds Section
-local SectionSeeds = TabAutoBuy:Section({
-    Title = "Seeds Shop",
-    Box = false,
-    FontWeight = "SemiBold",
-    TextTransparency = 0.05,
-    TextXAlignment = "Left",
-    TextSize = 17,
-    Opened = true,
-})
-
-SectionSeeds:Paragraph({Title = "🌱 Seeds Manager", Desc = "Automated seed purchasing"})
-SectionSeeds:Dropdown({
+-- Auto Buy Tab
+TabAutoBuy:Section({Title = "Seeds Shop", Icon = "leaf"})
+TabAutoBuy:Paragraph({Title = "🌱 Seeds Manager", Desc = "Automated seed purchasing"})
+TabAutoBuy:Dropdown({
     Title = "Select Seeds",
     Values = Constants.Seeds,
     Multi = true,
     AllowNone = true,
     Callback = function(v) Config.SelectedSeeds = v end
 })
-SectionSeeds:Toggle({
+TabAutoBuy:Toggle({
     Title = "Auto Buy Selected Seeds", 
     Callback = function(v) Config.AutoBuySeeds = v end
 })
-SectionSeeds:Toggle({
+TabAutoBuy:Toggle({
     Title = "Auto Buy All Seeds", 
     Callback = function(v) Config.AutoBuyAllSeeds = v end
 })
 
--- Gears Section
-local SectionGears = TabAutoBuy:Section({
-    Title = "Gears Shop",
-    Box = false,
-    FontWeight = "SemiBold",
-    TextTransparency = 0.05,
-    TextXAlignment = "Left",
-    TextSize = 17,
-    Opened = true,
-})
-
-SectionGears:Paragraph({Title = "⚙️ Gear Shop", Desc = "Automated gear purchasing"})
-SectionGears:Dropdown({
+TabAutoBuy:Section({Title = "Gears Shop", Icon = "wrench"})
+TabAutoBuy:Paragraph({Title = "⚙️ Gear Shop", Desc = "Automated gear purchasing"})
+TabAutoBuy:Dropdown({
     Title = "Select Gears",
     Values = Constants.Gears,
     Multi = true,
     AllowNone = true,
     Callback = function(v) Config.SelectedGears = v end
 })
-SectionGears:Toggle({
+TabAutoBuy:Toggle({
     Title = "Auto Buy Selected Gears", 
     Callback = function(v) Config.AutoBuyGears = v end
 })
-SectionGears:Toggle({
+TabAutoBuy:Toggle({
     Title = "Auto Buy All Gears", 
     Callback = function(v) Config.AutoBuyAllGears = v end
 })
 
--- Sell Tab (Separated)
-local TabSell = SectionGame:Tab({Title = "Sell", Icon = "dollar-sign"})
+-- Sell Tab
 TabSell:Paragraph({Title = "💰 Auto Sell Manager", Desc = "Automated selling system"})
 
 TabSell:Toggle({
@@ -232,7 +211,6 @@ TabSell:Paragraph({
 })
 
 -- Brainrot Tab
-local TabBrainrot = SectionGame:Tab({Title = "Brainrot", Icon = "skull"})
 TabBrainrot:Paragraph({
     Title = "🧠 Brainrot Manager",
     Desc = "Optimize your equipment",
@@ -246,34 +224,22 @@ TabBrainrot:Paragraph({
     }}
 })
 
--- Event Tab (Auto Collect)
-local TabEvent = SectionGame:Tab({Title = "Event", Icon = "hand-coins"})
-
-local SectionCollect = TabEvent:Section({
-    Title = "Auto Collect Money",
-    Box = false,
-    FontWeight = "SemiBold",
-    TextTransparency = 0.05,
-    TextXAlignment = "Left",
-    TextSize = 17,
-    Opened = true,
-})
-
-SectionCollect:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money from plot"})
-SectionCollect:Slider({
+-- Event Tab
+TabEvent:Section({Title = "Auto Collect Money", Icon = "hand-coins"})
+TabEvent:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money from plot"})
+TabEvent:Slider({
     Title = "Collect Delay (sec)",
     Value = {Min = 1, Max = 60, Default = 5},
     Step = 1,
     Callback = function(v) Config.AutoCollectDelay = v end
 })
-SectionCollect:Toggle({
+TabEvent:Toggle({
     Title = "Auto Collect Money (Event)",
     Description = "Use event-based collection (faster & safer)",
     Callback = function(v) Config.AutoCollectEnabled = v end
 })
 
 -- Misc Tab
-local TabMisc = SectionSettings:Tab({Title = "Misc", Icon = "settings"})
 TabMisc:Paragraph({Title = "⚡ Performance", Desc = "Optimize game performance"})
 TabMisc:Paragraph({
     Title = "Remove Textures",
