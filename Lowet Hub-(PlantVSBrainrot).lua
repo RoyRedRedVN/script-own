@@ -1,4 +1,4 @@
--- Lowet Hub V1.0 - Optimized & Restructured
+-- Lowet Hub V1.0 - Optimized & Compact
 repeat task.wait() until game:IsLoaded()
 if setfpscap then setfpscap(1000000) end
 
@@ -41,15 +41,14 @@ Window:Tag({Title = "V1.0", Color = Color3.fromRGB(255, 107, 53), Radius = 13})
 Window:Tag({Title = "BETA", Color = Color3.fromRGB(255, 140, 66), Radius = 13})
 
 -- Services
+local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WS = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 local player = Players.LocalPlayer
 
 -- Config
-local Config = {
+local C = {
     AutoFarm = false,
     AutoMoney = false,
     SellBrainrot = false,
@@ -65,7 +64,7 @@ local Config = {
     AutoCollectEnabled = false
 }
 
-local Constants = {
+local Data = {
     Seeds = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
     Gears = {"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"},
     Bats = {"Aluminum Bat", "Iron Core Bat", "Iron Plate Bat", "Leather Grip Bat", "Basic Bat"},
@@ -73,31 +72,17 @@ local Constants = {
 }
 
 -- Utils
-local function Notify(msg) 
-    WindUI:Notify({
-        Title = "Notification",
-        Content = msg,
-        Duration = 3,
-        Icon = "house",
-    }) 
-end
+local function Notify(msg) WindUI:Notify({Title = "Notification", Content = msg, Duration = 3, Icon = "house"}) end
+local function Safe(func) pcall(func) end
+local function GetRemote(path) return RS:WaitForChild("Remotes"):WaitForChild(path) end
+local function GetBridge() return RS:FindFirstChild("BridgeNet2") end
 
-local function SafeCall(func) pcall(func) end
-
-local function GetRemote(path) 
-    return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild(path) 
-end
-
-local function GetBridgeNet2()
-    return ReplicatedStorage:FindFirstChild("BridgeNet2")
-end
-
--- Tabs
+-- Create Tabs
 local TabHome = Window:Tab({Title = "Home", Icon = "house"})
-local TabAutoFarm = Window:Tab({Title = "Auto Farm", Icon = "zap"})
-local TabAutoBuy = Window:Tab({Title = "Auto Buy", Icon = "shopping-cart"})
+local TabFarm = Window:Tab({Title = "Auto Farm", Icon = "zap"})
+local TabBuy = Window:Tab({Title = "Auto Buy", Icon = "shopping-cart"})
 local TabSell = Window:Tab({Title = "Sell", Icon = "dollar-sign"})
-local TabBrainrot = Window:Tab({Title = "Brainrot", Icon = "skull"})
+local TabBrain = Window:Tab({Title = "Brainrot", Icon = "skull"})
 local TabEvent = Window:Tab({Title = "Event", Icon = "hand-coins"})
 local TabMisc = Window:Tab({Title = "Misc", Icon = "settings"})
 
@@ -106,250 +91,90 @@ TabHome:Paragraph({Title = "Welcome to Lowet Hub! 🎮", Desc = "Premium feature
 TabHome:Paragraph({
     Title = "Discord Community",
     Desc = "Join for updates and support!",
-    Buttons = {{
-        Icon = "copy",
-        Title = "Copy Discord Link",
-        Callback = function()
-            setclipboard("https://discord.gg/VyQfTtDJnY")
-            Notify("Discord link copied!")
-        end
-    }}
+    Buttons = {{Icon = "copy", Title = "Copy Discord Link", Callback = function() setclipboard("https://discord.gg/VyQfTtDJnY") Notify("Discord link copied!") end}}
 })
 
 -- Auto Farm Tab
-TabAutoFarm:Paragraph({Title = "🚀 Auto Farm System", Desc = "Intelligent farming with auto-combat"})
-TabAutoFarm:Dropdown({
-    Title = "Target Rarities",
-    Values = Constants.Rarities,
-    Value = Config.SelectedRarities,
-    Multi = true,
-    AllowNone = true,
-    Callback = function(v) Config.SelectedRarities = v end
-})
-TabAutoFarm:Toggle({
-    Title = "Enable Auto Farm",
-    Description = "Auto teleport, combat, and loot",
-    Callback = function(v) Config.AutoFarm = v end
-})
-TabAutoFarm:Toggle({
-    Title = "Auto Farm Money",
-    Description = "Auto equip best brainrots every 10s",
-    Callback = function(v) Config.AutoMoney = v end
-})
+TabFarm:Paragraph({Title = "🚀 Auto Farm System", Desc = "Intelligent farming with auto-combat"})
+TabFarm:Dropdown({Title = "Target Rarities", Values = Data.Rarities, Value = C.SelectedRarities, Multi = true, AllowNone = true, Callback = function(v) C.SelectedRarities = v end})
+TabFarm:Toggle({Title = "Enable Auto Farm", Description = "Auto teleport, combat, and loot", Callback = function(v) C.AutoFarm = v end})
+TabFarm:Toggle({Title = "Auto Farm Money", Description = "Auto equip best brainrots every 10s", Callback = function(v) C.AutoMoney = v end})
 
--- Auto Buy Tab
-TabAutoBuy:Section({Title = "Seeds Shop", Icon = "leaf"})
-TabAutoBuy:Paragraph({Title = "🌱 Seeds Manager", Desc = "Automated seed purchasing"})
-TabAutoBuy:Dropdown({
-    Title = "Select Seeds",
-    Values = Constants.Seeds,
-    Multi = true,
-    AllowNone = true,
-    Callback = function(v) Config.SelectedSeeds = v end
-})
-TabAutoBuy:Toggle({
-    Title = "Auto Buy Selected Seeds", 
-    Callback = function(v) Config.AutoBuySeeds = v end
-})
-TabAutoBuy:Toggle({
-    Title = "Auto Buy All Seeds", 
-    Callback = function(v) Config.AutoBuyAllSeeds = v end
-})
+-- Auto Buy Tab with Sections
+local SectionSeeds = TabBuy:Section({Title = "Seeds Shop"})
+SectionSeeds:Paragraph({Title = "🌱 Seeds Manager", Desc = "Automated seed purchasing"})
+SectionSeeds:Dropdown({Title = "Select Seeds", Values = Data.Seeds, Multi = true, AllowNone = true, Callback = function(v) C.SelectedSeeds = v end})
+SectionSeeds:Toggle({Title = "Auto Buy Selected Seeds", Callback = function(v) C.AutoBuySeeds = v end})
+SectionSeeds:Toggle({Title = "Auto Buy All Seeds", Callback = function(v) C.AutoBuyAllSeeds = v end})
 
-TabAutoBuy:Section({Title = "Gears Shop", Icon = "wrench"})
-TabAutoBuy:Paragraph({Title = "⚙️ Gear Shop", Desc = "Automated gear purchasing"})
-TabAutoBuy:Dropdown({
-    Title = "Select Gears",
-    Values = Constants.Gears,
-    Multi = true,
-    AllowNone = true,
-    Callback = function(v) Config.SelectedGears = v end
-})
-TabAutoBuy:Toggle({
-    Title = "Auto Buy Selected Gears", 
-    Callback = function(v) Config.AutoBuyGears = v end
-})
-TabAutoBuy:Toggle({
-    Title = "Auto Buy All Gears", 
-    Callback = function(v) Config.AutoBuyAllGears = v end
-})
+local SectionGears = TabBuy:Section({Title = "Gears Shop"})
+SectionGears:Paragraph({Title = "⚙️ Gear Shop", Desc = "Automated gear purchasing"})
+SectionGears:Dropdown({Title = "Select Gears", Values = Data.Gears, Multi = true, AllowNone = true, Callback = function(v) C.SelectedGears = v end})
+SectionGears:Toggle({Title = "Auto Buy Selected Gears", Callback = function(v) C.AutoBuyGears = v end})
+SectionGears:Toggle({Title = "Auto Buy All Gears", Callback = function(v) C.AutoBuyAllGears = v end})
 
 -- Sell Tab
 TabSell:Paragraph({Title = "💰 Auto Sell Manager", Desc = "Automated selling system"})
-
-TabSell:Toggle({
-    Title = "Auto Sell Brainrots",
-    Description = "Keep equipped, auto sell brainrots only",
-    Callback = function(v) 
-        Config.SellBrainrot = v 
-        Notify(v and "Auto sell brainrots enabled!" or "Auto sell brainrots disabled")
-    end
-})
-
-TabSell:Toggle({
-    Title = "Auto Sell Plants", 
-    Description = "Keep equipped, auto sell plants only",
-    Callback = function(v) 
-        Config.SellPlant = v 
-        Notify(v and "Auto sell plants enabled!" or "Auto sell plants disabled")
-    end
-})
-
-TabSell:Paragraph({
-    Title = "Manual Sell",
-    Desc = "One-time sell operations",
-    Buttons = {
-        {
-            Icon = "trash-2", 
-            Title = "Sell Items Now", 
-            Callback = function() 
-                SafeCall(function() GetRemote("ItemSell"):FireServer() end) 
-                Notify("Items sold!") 
-            end
-        }
-    }
-})
+TabSell:Toggle({Title = "Auto Sell Brainrots", Description = "Keep equipped, auto sell brainrots only", Callback = function(v) C.SellBrainrot = v Notify(v and "Auto sell brainrots enabled!" or "Auto sell brainrots disabled") end})
+TabSell:Toggle({Title = "Auto Sell Plants", Description = "Keep equipped, auto sell plants only", Callback = function(v) C.SellPlant = v Notify(v and "Auto sell plants enabled!" or "Auto sell plants disabled") end})
+TabSell:Paragraph({Title = "Manual Sell", Desc = "One-time sell operations", Buttons = {{Icon = "trash-2", Title = "Sell Items Now", Callback = function() Safe(function() GetRemote("ItemSell"):FireServer() end) Notify("Items sold!") end}}})
 
 -- Brainrot Tab
-TabBrainrot:Paragraph({
-    Title = "🧠 Brainrot Manager",
-    Desc = "Optimize your equipment",
-    Buttons = {{
-        Icon = "zap",
-        Title = "Equip Best",
-        Callback = function()
-            SafeCall(function() GetRemote("EquipBestBrainrots"):FireServer() end)
-            Notify("Equipped best brainrots!")
-        end
-    }}
-})
+TabBrain:Paragraph({Title = "🧠 Brainrot Manager", Desc = "Optimize your equipment", Buttons = {{Icon = "zap", Title = "Equip Best", Callback = function() Safe(function() GetRemote("EquipBestBrainrots"):FireServer() end) Notify("Equipped best brainrots!") end}}})
 
--- Event Tab
-TabEvent:Section({Title = "Auto Collect Money", Icon = "hand-coins"})
-TabEvent:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money from plot"})
-TabEvent:Slider({
-    Title = "Collect Delay (sec)",
-    Value = {Min = 1, Max = 60, Default = 5},
-    Step = 1,
-    Callback = function(v) Config.AutoCollectDelay = v end
-})
-TabEvent:Toggle({
-    Title = "Auto Collect Money (Event)",
-    Description = "Use event-based collection (faster & safer)",
-    Callback = function(v) Config.AutoCollectEnabled = v end
-})
+-- Event Tab with Section
+local SectionCollect = TabEvent:Section({Title = "Auto Collect Money"})
+SectionCollect:Paragraph({Title = "💸 Auto Collection", Desc = "Automatically collect money from plot"})
+SectionCollect:Slider({Title = "Collect Delay (sec)", Value = {Min = 1, Max = 60, Default = 5}, Step = 1, Callback = function(v) C.AutoCollectDelay = v end})
+SectionCollect:Toggle({Title = "Auto Collect Money (Event)", Description = "Use event-based collection (faster & safer)", Callback = function(v) C.AutoCollectEnabled = v end})
 
 -- Misc Tab
 TabMisc:Paragraph({Title = "⚡ Performance", Desc = "Optimize game performance"})
 TabMisc:Paragraph({
     Title = "Remove Textures",
     Desc = "Reduce lag by removing visuals",
-    Buttons = {{
-        Icon = "zap",
-        Title = "Optimize Now",
-        Callback = function()
-            SafeCall(function()
-                for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj:IsA("Texture") or obj:IsA("Decal") then 
-                        obj:Destroy()
-                    elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then 
-                        obj.Enabled = false
-                    elseif obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("UnionOperation") then 
-                        obj.Material = Enum.Material.SmoothPlastic 
-                        obj.Reflectance = 0 
-                    end
-                end
-                local Lighting = game:GetService("Lighting")
-                Lighting.GlobalShadows = false
-                Lighting.FogEnd = 9e9
-                Lighting.Brightness = 0
-                for _, effect in pairs(Lighting:GetChildren()) do 
-                    if effect:IsA("PostEffect") then 
-                        effect.Enabled = false 
-                    end 
-                end
-            end)
-            Notify("Game optimized!")
-        end
-    }}
+    Buttons = {{Icon = "zap", Title = "Optimize Now", Callback = function()
+        Safe(function()
+            for _, obj in pairs(WS:GetDescendants()) do
+                if obj:IsA("Texture") or obj:IsA("Decal") then obj:Destroy()
+                elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then obj.Enabled = false
+                elseif obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("UnionOperation") then obj.Material = Enum.Material.SmoothPlastic obj.Reflectance = 0 end
+            end
+            local L = game:GetService("Lighting")
+            L.GlobalShadows = false L.FogEnd = 9e9 L.Brightness = 0
+            for _, e in pairs(L:GetChildren()) do if e:IsA("PostEffect") then e.Enabled = false end end
+        end)
+        Notify("Game optimized!")
+    end}}
 })
 
--- Auto Buy System
+-- Auto Buy Loop
 task.spawn(function()
     while task.wait(0.5) do
-        local bn = GetBridgeNet2()
+        local bn = GetBridge()
+        if not bn or not bn:FindFirstChild("dataRemoteEvent") then continue end
         
-        if Config.AutoBuySeeds and #Config.SelectedSeeds > 0 then
-            for _, seed in ipairs(Config.SelectedSeeds) do
-                local args = {{seed .. " Seed", "\b"}}
-                if bn and bn:FindFirstChild("dataRemoteEvent") then
-                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
-                end
-                task.wait(0.1)
-            end
+        if C.AutoBuySeeds and #C.SelectedSeeds > 0 then
+            for _, s in ipairs(C.SelectedSeeds) do Safe(function() bn.dataRemoteEvent:FireServer({{s .. " Seed", "\b"}}) end) task.wait(0.1) end
         end
-        
-        if Config.AutoBuyAllSeeds then
-            for _, seed in ipairs(Constants.Seeds) do
-                local args = {{seed .. " Seed", "\b"}}
-                if bn and bn:FindFirstChild("dataRemoteEvent") then
-                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
-                end
-                task.wait(0.1)
-            end
+        if C.AutoBuyAllSeeds then
+            for _, s in ipairs(Data.Seeds) do Safe(function() bn.dataRemoteEvent:FireServer({{s .. " Seed", "\b"}}) end) task.wait(0.1) end
         end
-        
-        if Config.AutoBuyGears and #Config.SelectedGears > 0 then
-            for _, gear in ipairs(Config.SelectedGears) do
-                local args = {{gear, "\026"}}
-                if bn and bn:FindFirstChild("dataRemoteEvent") then
-                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
-                end
-                task.wait(0.1)
-            end
+        if C.AutoBuyGears and #C.SelectedGears > 0 then
+            for _, g in ipairs(C.SelectedGears) do Safe(function() bn.dataRemoteEvent:FireServer({{g, "\026"}}) end) task.wait(0.1) end
         end
-        
-        if Config.AutoBuyAllGears then
-            for _, gear in ipairs(Constants.Gears) do
-                local args = {{gear, "\026"}}
-                if bn and bn:FindFirstChild("dataRemoteEvent") then
-                    SafeCall(function() bn.dataRemoteEvent:FireServer(unpack(args)) end)
-                end
-                task.wait(0.1)
-            end
+        if C.AutoBuyAllGears then
+            for _, g in ipairs(Data.Gears) do Safe(function() bn.dataRemoteEvent:FireServer({{g, "\026"}}) end) task.wait(0.1) end
         end
     end
 end)
 
--- Auto Sell System (Separated)
+-- Auto Sell Loop
 task.spawn(function()
-    while true do
-        task.wait(0.69)
-        
-        -- Sell Brainrots Only
-        if Config.SellBrainrot and not Config.SellPlant then
-            SafeCall(function()
-                local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-                if remotes and remotes:FindFirstChild("ItemSell") then
-                    remotes.ItemSell:FireServer()
-                end
-            end)
-        end
-        
-        -- Sell Plants Only
-        if Config.SellPlant and not Config.SellBrainrot then
-            SafeCall(function()
-                local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-                if remotes and remotes:FindFirstChild("ItemSell") then
-                    remotes.ItemSell:FireServer()
-                end
-            end)
-        end
-        
-        -- Sell Both (if both toggles are on)
-        if Config.SellBrainrot and Config.SellPlant then
-            SafeCall(function()
-                local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+    while task.wait(0.69) do
+        if C.SellBrainrot or C.SellPlant then
+            Safe(function()
+                local remotes = RS:FindFirstChild("Remotes")
                 if remotes and remotes:FindFirstChild("ItemSell") then
                     remotes.ItemSell:FireServer()
                 end
@@ -358,204 +183,142 @@ task.spawn(function()
     end
 end)
 
--- Auto Farm System
+-- Auto Farm Loop
 task.spawn(function()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    local humanoid = character:WaitForChild("Humanoid")
-    local currentBat = nil
-    local attackQueue = {}
-    local isAttacking = false
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
+    local bat, queue, attacking = nil, {}, false
     
-    local function GetBestBat()
-        for _, bat in ipairs(Constants.Bats) do
-            local tool = player.Backpack:FindFirstChild(bat) or character:FindFirstChild(bat)
-            if tool then return tool end
+    local function GetBat()
+        for _, b in ipairs(Data.Bats) do
+            local t = player.Backpack:FindFirstChild(b) or char:FindFirstChild(b)
+            if t then return t end
         end
     end
     
     local function EquipBat()
-        for _, bat in ipairs(Constants.Bats) do
-            local equipped = character:FindFirstChild(bat)
-            if equipped then currentBat = equipped return true end
-        end
-        local bat = GetBestBat()
-        if bat then SafeCall(function() humanoid:EquipTool(bat) currentBat = bat end) return true end
-        return false
+        for _, b in ipairs(Data.Bats) do if char:FindFirstChild(b) then bat = char:FindFirstChild(b) return true end end
+        local t = GetBat() if t then Safe(function() hum:EquipTool(t) bat = t end) return true end return false
     end
     
-    -- Attack Loop
     task.spawn(function()
-        local attackRemote = GetRemote("AttacksServer"):WaitForChild("WeaponAttack")
-        while true do
-            task.wait(0.01)
-            if #attackQueue > 0 and not isAttacking and Config.AutoFarm then
-                isAttacking = true
-                local target = table.remove(attackQueue, 1)
-                SafeCall(function()
-                    local bat = currentBat or GetBestBat()
-                    if bat and bat.Parent == character then bat:Activate() end
-                    attackRemote:FireServer({target})
+        local atk = GetRemote("AttacksServer"):WaitForChild("WeaponAttack")
+        while task.wait(0.01) do
+            if #queue > 0 and not attacking and C.AutoFarm then
+                attacking = true
+                Safe(function()
+                    local b = bat or GetBat()
+                    if b and b.Parent == char then b:Activate() end
+                    atk:FireServer({table.remove(queue, 1)})
                 end)
-                isAttacking = false
-            elseif not Config.AutoFarm then attackQueue = {} end
+                attacking = false
+            elseif not C.AutoFarm then queue = {} end
         end
     end)
     
-    -- Auto Equip Bat
     task.spawn(function()
-        while true do
-            if Config.AutoFarm then
-                local brainrotsFolder = Workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
+        while task.wait(0.5) do
+            if C.AutoFarm then
                 local hasTarget = false
-                for _, b in ipairs(brainrotsFolder:GetChildren()) do
-                    if b:IsA("Model") then
-                        local rarity = b:GetAttribute("Rarity")
-                        if rarity and table.find(Config.SelectedRarities, rarity) then hasTarget = true break end
-                    end
+                for _, b in ipairs(WS:WaitForChild("ScriptedMap"):WaitForChild("Brainrots"):GetChildren()) do
+                    if b:IsA("Model") and table.find(C.SelectedRarities, b:GetAttribute("Rarity")) then hasTarget = true break end
                 end
-                if hasTarget then EquipBat() else if currentBat and currentBat.Parent == character then SafeCall(function() humanoid:UnequipTools() currentBat = nil end) end end
+                if hasTarget then EquipBat() else if bat and bat.Parent == char then Safe(function() hum:UnequipTools() bat = nil end) end end
             end
-            task.wait(0.5)
         end
     end)
     
-    -- Find Plot
-    local myPlot
-    for _, plot in ipairs(Workspace:WaitForChild("Plots"):GetChildren()) do
-        if plot:GetAttribute("Owner") == player.Name then myPlot = plot break end
+    local plot
+    for _, p in ipairs(WS:WaitForChild("Plots"):GetChildren()) do
+        if p:GetAttribute("Owner") == player.Name then plot = p break end
     end
-    if not myPlot then return end
+    if not plot then return end
     
-    -- Find Roads
-    local roadParts = {}
-    if myPlot:FindFirstChild("Other") then
-        for _, tier in ipairs(myPlot.Other:GetChildren()) do
-            local roadModel = tier:FindFirstChild("Road")
-            if roadModel then
-                for _, p in ipairs(roadModel:GetDescendants()) do
-                    if p:IsA("BasePart") then table.insert(roadParts, p) end
-                end
+    local roads = {}
+    if plot:FindFirstChild("Other") then
+        for _, t in ipairs(plot.Other:GetChildren()) do
+            local r = t:FindFirstChild("Road")
+            if r then for _, p in ipairs(r:GetDescendants()) do if p:IsA("BasePart") then table.insert(roads, p) end end end
+        end
+    end
+    
+    local nc
+    local function Noclip(e)
+        if e then nc = RunService.Stepped:Connect(function() if char then for _, v in pairs(char:GetDescendants()) do if v:IsA("BasePart") and v.CanCollide and v.Name ~= "HumanoidRootPart" then v.CanCollide = false end end end end)
+        else if nc then nc:Disconnect() nc = nil end end
+    end
+    
+    local function FindGrenade()
+        for _, c in ipairs({char, player.Backpack}) do
+            for _, i in ipairs(c:GetChildren()) do if i:IsA("Tool") and i.Name:match("Frost Grenade") then return i end end
+        end
+    end
+    
+    local function FireGrenade(b)
+        if not b or not b.Parent then return end
+        if (b:GetAttribute("Progress") or 0) > 0.6 then
+            local t = FindGrenade()
+            if t then
+                local bp = b.PrimaryPart or b:FindFirstChildWhichIsA("BasePart")
+                if bp then hum:EquipTool(t) GetRemote("UseItem"):FireServer({{Toggle = true, Tool = t, Time = 0.5, Pos = bp.Position}}) end
             end
         end
     end
     
-    -- Noclip
-    local NoclipConnection
-    local function Noclip(enable)
-        if enable then
-            NoclipConnection = RunService.Stepped:Connect(function()
-                if character then
-                    for _, v in pairs(character:GetDescendants()) do
-                        if v:IsA("BasePart") and v.CanCollide and v.Name ~= "HumanoidRootPart" then v.CanCollide = false end
-                    end
-                end
-            end)
-        else
-            if NoclipConnection then NoclipConnection:Disconnect() NoclipConnection = nil end
-        end
-    end
-    
-    local function FindFrostGrenade()
-        for _, container in ipairs({character, player.Backpack}) do
-            for _, item in ipairs(container:GetChildren()) do
-                if item:IsA("Tool") and item.Name:match("Frost Grenade") then return item end
-            end
-        end
-    end
-    
-    local function FireGrenade(brainrot)
-        if not brainrot or not brainrot.Parent then return end
-        local progress = brainrot:GetAttribute("Progress") or 0
-        if progress > 0.6 then
-            local tool = FindFrostGrenade()
-            if tool then
-                local bp = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
-                if bp then
-                    humanoid:EquipTool(tool)
-                    GetRemote("UseItem"):FireServer({{Toggle = true, Tool = tool, Time = 0.5, Pos = bp.Position}})
-                end
-            end
-        end
-    end
-    
-    local brainrotsFolder = Workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
+    local bFolder = WS:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
     local function FindTarget()
-        for _, b in ipairs(brainrotsFolder:GetChildren()) do
-            if b:IsA("Model") then
-                local rarity = b:GetAttribute("Rarity")
-                if rarity and table.find(Config.SelectedRarities, rarity) then
-                    local primary = b.PrimaryPart or b:FindFirstChildWhichIsA("BasePart")
-                    if primary then
-                        for _, roadPart in ipairs(roadParts) do
-                            if (primary.Position - roadPart.Position).Magnitude <= 20 then return b end
-                        end
-                    end
-                end
+        for _, b in ipairs(bFolder:GetChildren()) do
+            if b:IsA("Model") and table.find(C.SelectedRarities, b:GetAttribute("Rarity")) then
+                local p = b.PrimaryPart or b:FindFirstChildWhichIsA("BasePart")
+                if p then for _, r in ipairs(roads) do if (p.Position - r.Position).Magnitude <= 20 then return b end end end
             end
         end
     end
     
-    -- Main Farm Loop
     while true do
-        if Config.AutoFarm then
-            local target = FindTarget()
-            if target then
-                local targetPart = target.PrimaryPart or target:FindFirstChildWhichIsA("BasePart")
-                if targetPart then
+        if C.AutoFarm then
+            local t = FindTarget()
+            if t then
+                local tp = t.PrimaryPart or t:FindFirstChildWhichIsA("BasePart")
+                if tp then
                     Noclip(true)
-                    hrp.CFrame = CFrame.new(targetPart.Position)
-                    local bodyPos = Instance.new("BodyPosition")
-                    bodyPos.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-                    bodyPos.P = 5000
-                    bodyPos.D = 100
-                    bodyPos.Position = hrp.Position
-                    bodyPos.Parent = hrp
-                    local lastFire = 0
-                    while target.Parent and Config.AutoFarm do
-                        bodyPos.Position = targetPart.Position
-                        local progress = target:GetAttribute("Progress") or 0
-                        if progress > 0.6 then local tool = FindFrostGrenade() if tool then humanoid:EquipTool(tool) end end
-                        local now = tick()
-                        if now - lastFire >= 2 then FireGrenade(target) lastFire = now end
-                        if target.Name then for i = 1, 3 do table.insert(attackQueue, target.Name) end end
+                    hrp.CFrame = CFrame.new(tp.Position)
+                    local bp = Instance.new("BodyPosition")
+                    bp.MaxForce = Vector3.new(1e5, 1e5, 1e5) bp.P = 5000 bp.D = 100 bp.Position = hrp.Position bp.Parent = hrp
+                    local lf = 0
+                    while t.Parent and C.AutoFarm do
+                        bp.Position = tp.Position
+                        if (t:GetAttribute("Progress") or 0) > 0.6 then local g = FindGrenade() if g then hum:EquipTool(g) end end
+                        local n = tick()
+                        if n - lf >= 2 then FireGrenade(t) lf = n end
+                        if t.Name then for i = 1, 3 do table.insert(queue, t.Name) end end
                         task.wait(0.0001)
                     end
-                    humanoid:UnequipTools()
-                    bodyPos:Destroy()
-                    Noclip(false)
+                    hum:UnequipTools() bp:Destroy() Noclip(false)
                 end
             else task.wait(1) end
         else task.wait(1) end
     end
 end)
 
--- Auto Money System
+-- Auto Money Loop
 task.spawn(function()
-    while true do
-        if Config.AutoMoney then 
-            SafeCall(function() GetRemote("EquipBestBrainrots"):FireServer() end) 
-            task.wait(10) 
-        else 
-            task.wait(1) 
-        end
+    while task.wait(C.AutoMoney and 10 or 1) do
+        if C.AutoMoney then Safe(function() GetRemote("EquipBestBrainrots"):FireServer() end) end
     end
 end)
 
--- Auto Collect System (Event-based)
+-- Auto Collect Loop
 task.spawn(function()
-    while true do
-        if Config.AutoCollectEnabled then
-            SafeCall(function()
-                local bn = GetBridgeNet2()
+    while task.wait(C.AutoCollectEnabled and C.AutoCollectDelay or 1) do
+        if C.AutoCollectEnabled then
+            Safe(function()
+                local bn = GetBridge()
                 if bn and bn:FindFirstChild("dataRemoteEvent") then
-                    local args = {{[2] = "\004"}}
-                    bn.dataRemoteEvent:FireServer(unpack(args))
+                    bn.dataRemoteEvent:FireServer({{[2] = "\004"}})
                 end
             end)
-            task.wait(Config.AutoCollectDelay)
-        else
-            task.wait(1)
         end
     end
 end)
