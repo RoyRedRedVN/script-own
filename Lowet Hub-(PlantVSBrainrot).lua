@@ -47,6 +47,8 @@ local player = Players.LocalPlayer
 local SelectedSeeds, SelectedGears, SelectedSellPlants, SelectedRarities = {}, {}, {}, {"Secret", "Limited"}
 local AutoBuySelectSeed, AutoBuyAllSeeds, AutoBuySelectGear, AutoBuyAllGear = false, false, false, false
 local AutoFarmEnabled, AutoFarmMoneyEnabled = false, false
+local TARGET_PLAYER_NAME = ""
+local GiftingEnabled = false
 
 -- Sections
 local SectionMain = Window:Section({Title = "Main", Icon = "house", Opened = true})
@@ -69,8 +71,10 @@ TabHome:Paragraph({
     }}
 })
 
--- Auto Farm Tab
+-- Auto Farm Tab (Combined with Seeds & Gear)
 local TabAutoFarm = SectionGame:Tab({Title = "Auto Farm", Icon = "zap"})
+
+-- Brainrot Farming Section
 TabAutoFarm:Paragraph({Title = "Auto Farm Brainrots", Desc = "Automatically farm brainrots with Frost Grenade"})
 TabAutoFarm:Dropdown({
     Title = "Select Rarities to Farm",
@@ -91,31 +95,29 @@ TabAutoFarm:Toggle({
     Callback = function(value) AutoFarmMoneyEnabled = value end
 })
 
--- Seeds Tab
-local TabSeeds = SectionGame:Tab({Title = "Seeds", Icon = "sprout"})
-TabSeeds:Paragraph({Title = "Seeds Manager", Desc = "Buy and manage your seeds"})
-TabSeeds:Dropdown({
+-- Seeds Section
+TabAutoFarm:Paragraph({Title = "Seeds Manager", Desc = "Buy and manage your seeds"})
+TabAutoFarm:Dropdown({
     Title = "Select Seeds",
     Values = {"Cactus", "Strawberry", "Pumpkin", "Dragon Fruit", "Eggplant", "Watermelon", "Cocotank", "Grape", "Carnivorous Plant", "Mr carrot", "Shroombino", "Tomatrio", "Mango"},
     Multi = true,
     AllowNone = true,
     Callback = function(selected) SelectedSeeds = selected end
 })
-TabSeeds:Toggle({Title = "Auto Buy Selected", Description = "Auto buy selected seeds", Callback = function(value) AutoBuySelectSeed = value end})
-TabSeeds:Toggle({Title = "Auto Buy All", Description = "Auto buy all seeds", Callback = function(value) AutoBuyAllSeeds = value end})
+TabAutoFarm:Toggle({Title = "Auto Buy Selected Seeds", Description = "Auto buy selected seeds", Callback = function(value) AutoBuySelectSeed = value end})
+TabAutoFarm:Toggle({Title = "Auto Buy All Seeds", Description = "Auto buy all seeds", Callback = function(value) AutoBuyAllSeeds = value end})
 
--- Gear Tab
-local TabGear = SectionGame:Tab({Title = "Gear", Icon = "wrench"})
-TabGear:Paragraph({Title = "Gear Shop", Desc = "Buy and equip your gears"})
-TabGear:Dropdown({
+-- Gear Section
+TabAutoFarm:Paragraph({Title = "Gear Shop", Desc = "Buy and equip your gears"})
+TabAutoFarm:Dropdown({
     Title = "Select Gears",
     Values = {"Frost Grenade", "Frost Blower", "Banana Gun", "Carrot Launcher", "Water Bucket"},
     Multi = true,
     AllowNone = true,
     Callback = function(selected) SelectedGears = selected end
 })
-TabGear:Toggle({Title = "Auto Buy Selected", Description = "Auto buy selected gears", Callback = function(value) AutoBuySelectGear = value end})
-TabGear:Toggle({Title = "Auto Buy All", Description = "Auto buy all gears", Callback = function(value) AutoBuyAllGear = value end})
+TabAutoFarm:Toggle({Title = "Auto Buy Selected Gears", Description = "Auto buy selected gears", Callback = function(value) AutoBuySelectGear = value end})
+TabAutoFarm:Toggle({Title = "Auto Buy All Gears", Description = "Auto buy all gears", Callback = function(value) AutoBuyAllGear = value end})
 
 -- Sell Tab
 local TabSell = SectionGame:Tab({Title = "Sell", Icon = "dollar-sign"})
@@ -222,6 +224,60 @@ TabBrainrot:Paragraph({
 local TabEvent = SectionGame:Tab({Title = "Event", Icon = "gift"})
 TabEvent:Paragraph({Title = "Event Features", Desc = "Special event-related features and activities"})
 
+-- Other Tab with Gift System
+local TabOther = SectionGame:Tab({Title = "Other", Icon = "box"})
+TabOther:Paragraph({Title = "Gift For Owner", Desc = "Send items from your backpack to another player"})
+
+-- Player Dropdown
+local playerNames = {}
+local function updatePlayerList()
+    playerNames = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then
+            table.insert(playerNames, p.Name)
+        end
+    end
+    return playerNames
+end
+
+updatePlayerList()
+
+TabOther:Dropdown({
+    Title = "Select Player",
+    Values = playerNames,
+    Value = playerNames[1] or "",
+    Callback = function(selected)
+        TARGET_PLAYER_NAME = selected
+        print("✓ Target player set to: " .. selected)
+    end
+})
+
+TabOther:Paragraph({
+    Title = "Refresh Player List",
+    Desc = "Update the list of players in the server",
+    Buttons = {{
+        Icon = "refresh-cw",
+        Title = "Refresh",
+        Callback = function()
+            updatePlayerList()
+            print("✓ Player list refreshed!")
+        end
+    }}
+})
+
+TabOther:Toggle({
+    Title = "Enable Auto Gift",
+    Description = "Automatically gift all items in backpack to selected player",
+    Callback = function(value)
+        GiftingEnabled = value
+        if value then
+            print("✓ Auto Gift enabled for: " .. TARGET_PLAYER_NAME)
+        else
+            print("✗ Auto Gift disabled")
+        end
+    end
+})
+
 -- Misc Tab
 local TabMisc = SectionSettings:Tab({Title = "Misc", Icon = "settings"})
 TabMisc:Paragraph({Title = "Miscellaneous Settings", Desc = "Additional features and settings"})
@@ -305,6 +361,70 @@ task.spawn(function()
                 task.wait(0.1)
             end
         end
+    end
+end)
+
+-- Auto Gift Logic
+task.spawn(function()
+    local GiftRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("GiftItem")
+    local FavoriteRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("FavoriteItem")
+
+    local function equipItem(item)
+        if item and item.Parent ~= player.Character then
+            item.Parent = player.Character
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid and item:IsA("Tool") then
+                pcall(function() humanoid:EquipTool(item) end)
+            end
+        end
+    end
+
+    local function toggleFavorite(item)
+        pcall(function() FavoriteRemote:FireServer(item:GetDebugId() or item.Name) end)
+    end
+
+    local function sendGift(item)
+        if TARGET_PLAYER_NAME == "" then
+            warn("✗ No target player selected!")
+            return
+        end
+        
+        local targetPlayer = Players:FindFirstChild(TARGET_PLAYER_NAME)
+        if targetPlayer then
+            pcall(function()
+                GiftRemote:FireServer({
+                    ["Item"] = item,
+                    ["ToGift"] = TARGET_PLAYER_NAME
+                })
+                print("✓ Gifted " .. item.Name .. " to " .. TARGET_PLAYER_NAME)
+            end)
+        else
+            warn("✗ Target player not found!")
+        end
+    end
+
+    while true do
+        if GiftingEnabled and TARGET_PLAYER_NAME ~= "" then
+            local backpack = player:FindFirstChild("Backpack")
+            if backpack then
+                local itemsToProcess = {}
+                for _, item in ipairs(backpack:GetChildren()) do
+                    table.insert(itemsToProcess, item)
+                end
+
+                for _, item in ipairs(itemsToProcess) do
+                    if not GiftingEnabled then break end
+                    
+                    equipItem(item)
+                    task.wait(0.5)
+                    toggleFavorite(item)
+                    task.wait(3)
+                    sendGift(item)
+                    task.wait(2)
+                end
+            end
+        end
+        task.wait(1)
     end
 end)
 
@@ -570,4 +690,13 @@ task.spawn(function()
             task.wait(1)
         end
     end
+end)
+
+-- Auto Update Player List
+Players.PlayerAdded:Connect(function()
+    updatePlayerList()
+end)
+
+Players.PlayerRemoving:Connect(function()
+    updatePlayerList()
 end)
