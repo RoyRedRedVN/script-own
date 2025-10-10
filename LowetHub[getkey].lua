@@ -1,4 +1,4 @@
--- Lowet Hub Key System UI - Compact Premium Version
+-- Lowet Hub Key System UI - Fixed Premium Version
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
@@ -23,13 +23,13 @@ UI.Name = "Lowet Hub"
 UI.Parent = CoreGui
 UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Main Container (Smaller Size)
+-- Main Container
 local Main = Instance.new("Frame")
 Main.Parent = UI
 Main.BackgroundColor3 = Colors.Background
 Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.5, -175, 0.5, -190)
-Main.Size = UDim2.new(0, 350, 0, 380)
+Main.Position = UDim2.new(0.5, -210, 0.5, -210)
+Main.Size = UDim2.new(0, 420, 0, 420)
 Main.ClipsDescendants = true
 Main.ZIndex = 2
 
@@ -70,19 +70,19 @@ GlowBorder.Transparency = 0.4
 local TopBar = Instance.new("Frame")
 TopBar.Parent = Main
 TopBar.BackgroundTransparency = 1
-TopBar.Size = UDim2.new(1, 0, 0, 50)
+TopBar.Size = UDim2.new(1, 0, 0, 60)
 TopBar.ZIndex = 3
 
 -- Key System Label
 local KeySystemLabel = Instance.new("TextLabel")
 KeySystemLabel.Parent = TopBar
 KeySystemLabel.BackgroundTransparency = 1
-KeySystemLabel.Position = UDim2.new(0, 20, 0, 8)
-KeySystemLabel.Size = UDim2.new(0, 150, 0, 15)
+KeySystemLabel.Position = UDim2.new(0, 25, 0, 12)
+KeySystemLabel.Size = UDim2.new(0, 200, 0, 18)
 KeySystemLabel.Font = Enum.Font.Gotham
 KeySystemLabel.Text = "🔐 KEY SYSTEM"
 KeySystemLabel.TextColor3 = Colors.Primary
-KeySystemLabel.TextSize = 11
+KeySystemLabel.TextSize = 12
 KeySystemLabel.TextXAlignment = Enum.TextXAlignment.Left
 KeySystemLabel.ZIndex = 4
 
@@ -91,12 +91,12 @@ local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = TopBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(244, 67, 54)
 CloseBtn.BorderSizePixel = 0
-CloseBtn.Position = UDim2.new(1, -38, 0, 10)
-CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position = UDim2.new(1, -43, 0, 12)
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Colors.Text
-CloseBtn.TextSize = 14
+CloseBtn.TextSize = 16
 CloseBtn.ZIndex = 4
 
 local CloseCorner = Instance.new("UICorner")
@@ -113,35 +113,35 @@ end)
 local WelcomeText = Instance.new("TextLabel")
 WelcomeText.Parent = Main
 WelcomeText.BackgroundTransparency = 1
-WelcomeText.Position = UDim2.new(0, 0, 0, 55)
-WelcomeText.Size = UDim2.new(1, 0, 0, 18)
+WelcomeText.Position = UDim2.new(0, 0, 0, 75)
+WelcomeText.Size = UDim2.new(1, 0, 0, 20)
 WelcomeText.Font = Enum.Font.Gotham
 WelcomeText.Text = "Welcome to The,"
 WelcomeText.TextColor3 = Colors.Text
-WelcomeText.TextSize = 14
+WelcomeText.TextSize = 15
 WelcomeText.ZIndex = 3
 
 local HubTitle = Instance.new("TextLabel")
 HubTitle.Parent = Main
 HubTitle.BackgroundTransparency = 1
-HubTitle.Position = UDim2.new(0, 0, 0, 73)
-HubTitle.Size = UDim2.new(1, 0, 0, 28)
+HubTitle.Position = UDim2.new(0, 0, 0, 95)
+HubTitle.Size = UDim2.new(1, 0, 0, 35)
 HubTitle.Font = Enum.Font.GothamBold
-HubTitle.Text = "Lowet Hub"
+HubTitle.Text = "Speed Hub X"
 HubTitle.TextColor3 = Colors.Primary
-HubTitle.TextSize = 22
+HubTitle.TextSize = 26
 HubTitle.ZIndex = 3
 
 -- Key Label
 local KeyLabel = Instance.new("TextLabel")
 KeyLabel.Parent = Main
 KeyLabel.BackgroundTransparency = 1
-KeyLabel.Position = UDim2.new(0, 30, 0, 115)
-KeyLabel.Size = UDim2.new(0, 50, 0, 16)
+KeyLabel.Position = UDim2.new(0, 35, 0, 150)
+KeyLabel.Size = UDim2.new(0, 60, 0, 18)
 KeyLabel.Font = Enum.Font.Gotham
 KeyLabel.Text = "Key"
 KeyLabel.TextColor3 = Colors.TextSecondary
-KeyLabel.TextSize = 12
+KeyLabel.TextSize = 13
 KeyLabel.TextXAlignment = Enum.TextXAlignment.Left
 KeyLabel.ZIndex = 3
 
@@ -150,8 +150,8 @@ local KeyInputFrame = Instance.new("Frame")
 KeyInputFrame.Parent = Main
 KeyInputFrame.BackgroundColor3 = Colors.InputBg
 KeyInputFrame.BorderSizePixel = 0
-KeyInputFrame.Position = UDim2.new(0, 25, 0, 135)
-KeyInputFrame.Size = UDim2.new(0, 230, 0, 38)
+KeyInputFrame.Position = UDim2.new(0, 30, 0, 175)
+KeyInputFrame.Size = UDim2.new(0, 270, 0, 45)
 KeyInputFrame.ZIndex = 3
 
 local KeyInputCorner = Instance.new("UICorner")
@@ -168,14 +168,14 @@ KeyInputStroke.Transparency = 0.6
 local KeyInput = Instance.new("TextBox")
 KeyInput.Parent = KeyInputFrame
 KeyInput.BackgroundTransparency = 1
-KeyInput.Position = UDim2.new(0, 12, 0, 0)
-KeyInput.Size = UDim2.new(1, -24, 1, 0)
+KeyInput.Position = UDim2.new(0, 15, 0, 0)
+KeyInput.Size = UDim2.new(1, -30, 1, 0)
 KeyInput.Font = Enum.Font.Gotham
 KeyInput.PlaceholderText = "insert your key here"
 KeyInput.PlaceholderColor3 = Color3.fromRGB(100, 80, 70)
 KeyInput.Text = ""
 KeyInput.TextColor3 = Colors.Text
-KeyInput.TextSize = 13
+KeyInput.TextSize = 14
 KeyInput.TextXAlignment = Enum.TextXAlignment.Left
 KeyInput.ClearTextOnFocus = false
 KeyInput.ZIndex = 4
@@ -185,12 +185,12 @@ local PasteBtn = Instance.new("TextButton")
 PasteBtn.Parent = Main
 PasteBtn.BackgroundColor3 = Colors.Primary
 PasteBtn.BorderSizePixel = 0
-PasteBtn.Position = UDim2.new(0, 265, 0, 135)
-PasteBtn.Size = UDim2.new(0, 60, 0, 38)
+PasteBtn.Position = UDim2.new(0, 310, 0, 175)
+PasteBtn.Size = UDim2.new(0, 80, 0, 45)
 PasteBtn.Font = Enum.Font.GothamBold
 PasteBtn.Text = "Paste"
 PasteBtn.TextColor3 = Colors.Text
-PasteBtn.TextSize = 13
+PasteBtn.TextSize = 14
 PasteBtn.ZIndex = 3
 
 local PasteCorner = Instance.new("UICorner")
@@ -202,12 +202,12 @@ local SubmitBtn = Instance.new("TextButton")
 SubmitBtn.Parent = Main
 SubmitBtn.BackgroundColor3 = Colors.Primary
 SubmitBtn.BorderSizePixel = 0
-SubmitBtn.Position = UDim2.new(0, 30, 0, 185)
-SubmitBtn.Size = UDim2.new(0, 360, 0, 42)
+SubmitBtn.Position = UDim2.new(0, 30, 0, 235)
+SubmitBtn.Size = UDim2.new(0, 360, 0, 48)
 SubmitBtn.Font = Enum.Font.GothamBold
 SubmitBtn.Text = "Submit Key  ➤"
 SubmitBtn.TextColor3 = Colors.Text
-SubmitBtn.TextSize = 14
+SubmitBtn.TextSize = 15
 SubmitBtn.ZIndex = 3
 
 local SubmitCorner = Instance.new("UICorner")
@@ -226,60 +226,40 @@ SubmitGradient.Rotation = 45
 local BuyKeyText = Instance.new("TextLabel")
 BuyKeyText.Parent = Main
 BuyKeyText.BackgroundTransparency = 1
-BuyKeyText.Position = UDim2.new(0, 0, 0, 240)
-BuyKeyText.Size = UDim2.new(1, 0, 0, 16)
+BuyKeyText.Position = UDim2.new(0, 0, 0, 300)
+BuyKeyText.Size = UDim2.new(1, 0, 0, 18)
 BuyKeyText.Font = Enum.Font.Gotham
-BuyKeyText.Text = "Need Buy Key Lifetime? "
+BuyKeyText.RichText = true
+BuyKeyText.Text = "Need Buy Key Lifetime? <font color=\"rgb(255,87,34)\"><b>Click Copy Official Store</b></font>"
 BuyKeyText.TextColor3 = Colors.Text
-BuyKeyText.TextSize = 11
+BuyKeyText.TextSize = 12
 BuyKeyText.ZIndex = 3
-
-local BuyKeyLink = Instance.new("TextLabel")
-BuyKeyLink.Parent = Main
-BuyKeyLink.BackgroundTransparency = 1
-BuyKeyLink.Position = UDim2.new(0.5, -60, 0, 240)
-BuyKeyLink.Size = UDim2.new(0, 120, 0, 16)
-BuyKeyLink.Font = Enum.Font.GothamBold
-BuyKeyLink.Text = "Click Copy Official Store"
-BuyKeyLink.TextColor3 = Colors.Primary
-BuyKeyLink.TextSize = 11
-BuyKeyLink.ZIndex = 3
 
 local SupportText = Instance.new("TextLabel")
 SupportText.Parent = Main
 SupportText.BackgroundTransparency = 1
-SupportText.Position = UDim2.new(0, 0, 0, 260)
-SupportText.Size = UDim2.new(1, 0, 0, 16)
+SupportText.Position = UDim2.new(0, 0, 0, 325)
+SupportText.Size = UDim2.new(1, 0, 0, 18)
 SupportText.Font = Enum.Font.Gotham
-SupportText.Text = "Need support? "
+SupportText.RichText = true
+SupportText.Text = "Need support? <font color=\"rgb(114,137,218)\"><b>Join the Discord</b></font>"
 SupportText.TextColor3 = Colors.Text
-SupportText.TextSize = 11
+SupportText.TextSize = 12
 SupportText.ZIndex = 3
-
-local DiscordLink = Instance.new("TextLabel")
-DiscordLink.Parent = Main
-DiscordLink.BackgroundTransparency = 1
-DiscordLink.Position = UDim2.new(0.5, -35, 0, 260)
-DiscordLink.Size = UDim2.new(0, 70, 0, 16)
-DiscordLink.Font = Enum.Font.GothamBold
-DiscordLink.Text = "Join the Discord"
-DiscordLink.TextColor3 = Color3.fromRGB(114, 137, 218)
-DiscordLink.TextSize = 11
-DiscordLink.ZIndex = 3
 
 -- Bottom Buttons Container
 local BtnContainer = Instance.new("Frame")
 BtnContainer.Parent = Main
 BtnContainer.BackgroundTransparency = 1
-BtnContainer.Position = UDim2.new(0, 30, 1, -45)
-BtnContainer.Size = UDim2.new(0, 360, 0, 32)
+BtnContainer.Position = UDim2.new(0, 30, 0, 355)
+BtnContainer.Size = UDim2.new(0, 360, 0, 38)
 BtnContainer.ZIndex = 3
 
 local BtnLayout = Instance.new("UIListLayout")
 BtnLayout.Parent = BtnContainer
 BtnLayout.FillDirection = Enum.FillDirection.Horizontal
 BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-BtnLayout.Padding = UDim.new(0, 8)
+BtnLayout.Padding = UDim.new(0, 10)
 
 -- Create Bottom Buttons
 local function CreateBottomButton(icon, text)
@@ -287,11 +267,11 @@ local function CreateBottomButton(icon, text)
     btn.Parent = BtnContainer
     btn.BackgroundColor3 = Colors.Surface
     btn.BorderSizePixel = 0
-    btn.Size = UDim2.new(0, 113, 0, 32)
+    btn.Size = UDim2.new(0, 110, 0, 38)
     btn.Font = Enum.Font.GothamBold
     btn.Text = icon .. " " .. text
     btn.TextColor3 = Colors.Text
-    btn.TextSize = 11
+    btn.TextSize = 12
     btn.ZIndex = 3
     
     local corner = Instance.new("UICorner")
@@ -368,7 +348,7 @@ SubmitBtn.MouseButton1Click:Connect(function()
     else
         SubmitBtn.Text = "✗ Invalid Key"
         SubmitBtn.BackgroundColor3 = Colors.Error
-        Notify("LowetHub", "✗ Invalid key! Please try again.", 3)
+        Notify("Speed Hub X", "✗ Invalid key! Please try again.", 3)
         
         local originalPos = SubmitBtn.Position
         for i = 1, 6 do
@@ -387,26 +367,26 @@ end)
 -- Link Buttons Functions
 LinkvertiseBtn.MouseButton1Click:Connect(function()
     setclipboard("https://linkvertise.com/your-link")
-    Notify("LowetHub", "🔗 Linkvertise link copied!")
+    Notify("Speed Hub X", "🔗 Linkvertise link copied!")
 end)
 
 LootLabsBtn.MouseButton1Click:Connect(function()
     setclipboard("https://lootlabs.gg/your-link")
-    Notify("LowetHub", "🎁 LootLabs link copied!")
+    Notify("Speed Hub X", "🎁 LootLabs link copied!")
 end)
 
 RinkuBtn.MouseButton1Click:Connect(function()
     setclipboard("https://rinku.pro/your-link")
-    Notify("LowetHub", "💎 Rinku.pro link copied!")
+    Notify("Speed Hub X", "💎 Rinku.pro link copied!")
 end)
 
 -- Hover Effects
 SubmitBtn.MouseEnter:Connect(function()
-    TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 368, 0, 44)}):Play()
+    TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 368, 0, 50)}):Play()
 end)
 
 SubmitBtn.MouseLeave:Connect(function()
-    TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 360, 0, 42)}):Play()
+    TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 360, 0, 48)}):Play()
 end)
 
 PasteBtn.MouseEnter:Connect(function()
@@ -422,8 +402,8 @@ Main.Size = UDim2.new(0, 0, 0, 0)
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 
 TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-    Size = UDim2.new(0, 420, 0, 320),
-    Position = UDim2.new(0.5, -210, 0.5, -160)
+    Size = UDim2.new(0, 420, 0, 420),
+    Position = UDim2.new(0.5, -210, 0.5, -210)
 }):Play()
 
 -- Draggable functionality
