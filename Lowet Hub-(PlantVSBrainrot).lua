@@ -31,19 +31,14 @@ local Window = WindUI:CreateWindow({
         end,
     },
     
-    KeySystem = { 
-        -- ↓ Optional. You can remove it.
-        Key = { "1234", "5678" },
-        
-        Note = "Lowet Hub ( Key Vesion ).",       
-        -- ↓ Optional. You can remove it.
-        URL = "YOUR LINK TO GET KEY",
-        
-        -- ↓ Optional. You can remove it.
-        SaveKey = true, -- automatically save and load the key.
-        
-        -- ↓ Optional. You can remove it.
-        -- API = {} ← Services. Read about it below ↓
+    KeySystem = {                                                   
+        Note = "LowetHub (Key System) Only",        
+        API = {                                                     
+            { -- pandadevelopment
+                Type = "pandadevelopment", -- type
+                ServiceId = "bc02534d844b0822dab6143d9551257cea9d1bdb3a630fb1a51be4d12ce84df8", -- service id
+            },                                                      
+        },                                                          
     },
 })
 
