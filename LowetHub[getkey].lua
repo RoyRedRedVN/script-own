@@ -1,4 +1,4 @@
--- Lowet Hub Key System UI - Ultra Premium Edition
+-- Lowet Hub Key System UI - Compact Premium Version
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
@@ -7,67 +7,34 @@ local UserInputService = game:GetService("UserInputService")
 local Colors = {
     Primary = Color3.fromRGB(255, 87, 34),
     Secondary = Color3.fromRGB(255, 152, 0),
-    Background = Color3.fromRGB(18, 18, 25),
-    Surface = Color3.fromRGB(28, 28, 38),
-    SurfaceLight = Color3.fromRGB(38, 38, 50),
+    Background = Color3.fromRGB(25, 25, 35),
+    Surface = Color3.fromRGB(35, 35, 45),
+    SurfaceLight = Color3.fromRGB(45, 45, 60),
     Text = Color3.fromRGB(255, 255, 255),
     TextSecondary = Color3.fromRGB(180, 180, 190),
     Success = Color3.fromRGB(76, 175, 80),
     Error = Color3.fromRGB(244, 67, 54),
-    Glow = Color3.fromRGB(255, 107, 53)
+    InputBg = Color3.fromRGB(40, 30, 25)
 }
 
 -- Create UI
 local UI = Instance.new("ScreenGui")
-UI.Name = "LowetHubPremium"
+UI.Name = "LowetHubCompact"
 UI.Parent = CoreGui
 UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Background Blur with Gradient
-local Blur = Instance.new("Frame")
-Blur.Parent = UI
-Blur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Blur.BackgroundTransparency = 0.2
-Blur.BorderSizePixel = 0
-Blur.Size = UDim2.new(1, 0, 1, 0)
-
-local BlurGradient = Instance.new("UIGradient")
-BlurGradient.Parent = Blur
-BlurGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 15)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 5, 10))
-}
-BlurGradient.Rotation = 135
-BlurGradient.Transparency = NumberSequence.new{
-    NumberSequenceKeypoint.new(0, 0.3),
-    NumberSequenceKeypoint.new(1, 0.6)
-}
-
--- Main Container with Shadow
-local Shadow = Instance.new("ImageLabel")
-Shadow.Parent = UI
-Shadow.BackgroundTransparency = 1
-Shadow.Position = UDim2.new(0.5, -235, 0.5, -205)
-Shadow.Size = UDim2.new(0, 470, 0, 410)
-Shadow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-Shadow.ImageTransparency = 0.7
-Shadow.ScaleType = Enum.ScaleType.Slice
-Shadow.SliceCenter = Rect.new(10, 10, 10, 10)
-Shadow.ZIndex = 1
-
--- Main Frame
+-- Main Container (Smaller Size)
 local Main = Instance.new("Frame")
 Main.Parent = UI
 Main.BackgroundColor3 = Colors.Background
 Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.5, -225, 0.5, -195)
-Main.Size = UDim2.new(0, 450, 0, 390)
+Main.Position = UDim2.new(0.5, -210, 0.5, -160)
+Main.Size = UDim2.new(0, 420, 0, 320)
 Main.ClipsDescendants = true
 Main.ZIndex = 2
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 20)
+MainCorner.CornerRadius = UDim.new(0, 16)
 MainCorner.Parent = Main
 
 -- Animated Gradient Background
@@ -79,28 +46,17 @@ GradientBg.Size = UDim2.new(1, 0, 1, 0)
 GradientBg.ZIndex = 2
 
 local GradientCorner = Instance.new("UICorner")
-GradientCorner.CornerRadius = UDim.new(0, 20)
+GradientCorner.CornerRadius = UDim.new(0, 16)
 GradientCorner.Parent = GradientBg
 
 local MainGradient = Instance.new("UIGradient")
 MainGradient.Parent = GradientBg
 MainGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(18, 18, 25)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 28, 38))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(25, 25, 35)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 45))
 }
 MainGradient.Rotation = 45
-
--- Animated gradient rotation
-task.spawn(function()
-    while Main and Main.Parent do
-        for i = 0, 360, 1 do
-            if not Main or not Main.Parent then break end
-            MainGradient.Rotation = i
-            task.wait(0.05)
-        end
-    end
-end)
 
 -- Glow Border Effect
 local GlowBorder = Instance.new("UIStroke")
@@ -108,238 +64,230 @@ GlowBorder.Parent = Main
 GlowBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 GlowBorder.Color = Colors.Primary
 GlowBorder.Thickness = 2
-GlowBorder.Transparency = 0.3
+GlowBorder.Transparency = 0.4
 
--- Animated glow effect
-task.spawn(function()
-    while Main and Main.Parent do
-        TweenService:Create(GlowBorder, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0.7}):Play()
-        task.wait(3)
-    end
-end)
-
--- Top Bar with Glass Effect
+-- Top Bar
 local TopBar = Instance.new("Frame")
 TopBar.Parent = Main
-TopBar.BackgroundColor3 = Colors.Surface
-TopBar.BackgroundTransparency = 0.3
-TopBar.BorderSizePixel = 0
-TopBar.Size = UDim2.new(1, 0, 0, 70)
+TopBar.BackgroundTransparency = 1
+TopBar.Size = UDim2.new(1, 0, 0, 50)
 TopBar.ZIndex = 3
 
-local TopBarCorner = Instance.new("UICorner")
-TopBarCorner.CornerRadius = UDim.new(0, 20)
-TopBarCorner.Parent = TopBar
+-- Key System Label
+local KeySystemLabel = Instance.new("TextLabel")
+KeySystemLabel.Parent = TopBar
+KeySystemLabel.BackgroundTransparency = 1
+KeySystemLabel.Position = UDim2.new(0, 20, 0, 8)
+KeySystemLabel.Size = UDim2.new(0, 150, 0, 15)
+KeySystemLabel.Font = Enum.Font.Gotham
+KeySystemLabel.Text = "🔐 KEY SYSTEM"
+KeySystemLabel.TextColor3 = Colors.Primary
+KeySystemLabel.TextSize = 11
+KeySystemLabel.TextXAlignment = Enum.TextXAlignment.Left
+KeySystemLabel.ZIndex = 4
 
--- Close Button with Icon
+-- Close Button
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = TopBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(244, 67, 54)
 CloseBtn.BorderSizePixel = 0
-CloseBtn.Position = UDim2.new(1, -50, 0.5, -15)
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -38, 0, 10)
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.Text = "✕"
+CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Colors.Text
-CloseBtn.TextSize = 16
+CloseBtn.TextSize = 14
 CloseBtn.ZIndex = 4
 
 local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(1, 0)
+CloseCorner.CornerRadius = UDim.new(0, 8)
 CloseCorner.Parent = CloseBtn
 
 CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-    task.wait(0.3)
+    TweenService:Create(Main, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+    task.wait(0.25)
     UI:Destroy()
-end)
-
--- Logo Circle with Glow
-local LogoContainer = Instance.new("Frame")
-LogoContainer.Parent = Main
-LogoContainer.BackgroundColor3 = Colors.Primary
-LogoContainer.BorderSizePixel = 0
-LogoContainer.Position = UDim2.new(0.5, -40, 0, 90)
-LogoContainer.Size = UDim2.new(0, 80, 0, 80)
-LogoContainer.ZIndex = 4
-
-local LogoCorner = Instance.new("UICorner")
-LogoCorner.CornerRadius = UDim.new(1, 0)
-LogoCorner.Parent = LogoContainer
-
-local LogoGlow = Instance.new("UIStroke")
-LogoGlow.Parent = LogoContainer
-LogoGlow.Color = Colors.Glow
-LogoGlow.Thickness = 4
-LogoGlow.Transparency = 0.5
-
-local LogoGradient = Instance.new("UIGradient")
-LogoGradient.Parent = LogoContainer
-LogoGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Colors.Primary),
-    ColorSequenceKeypoint.new(1, Colors.Secondary)
-}
-LogoGradient.Rotation = 45
-
-local LogoText = Instance.new("TextLabel")
-LogoText.Parent = LogoContainer
-LogoText.BackgroundTransparency = 1
-LogoText.Size = UDim2.new(1, 0, 1, 0)
-LogoText.Font = Enum.Font.GothamBold
-LogoText.Text = "L"
-LogoText.TextColor3 = Colors.Text
-LogoText.TextSize = 42
-LogoText.ZIndex = 5
-
--- Animated logo pulse
-task.spawn(function()
-    while LogoContainer and LogoContainer.Parent do
-        TweenService:Create(LogoContainer, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Size = UDim2.new(0, 85, 0, 85)}):Play()
-        task.wait(2)
-    end
 end)
 
 -- Title Section
 local WelcomeText = Instance.new("TextLabel")
 WelcomeText.Parent = Main
 WelcomeText.BackgroundTransparency = 1
-WelcomeText.Position = UDim2.new(0, 0, 0, 180)
-WelcomeText.Size = UDim2.new(1, 0, 0, 20)
+WelcomeText.Position = UDim2.new(0, 0, 0, 55)
+WelcomeText.Size = UDim2.new(1, 0, 0, 18)
 WelcomeText.Font = Enum.Font.Gotham
-WelcomeText.Text = "WELCOME TO"
-WelcomeText.TextColor3 = Colors.TextSecondary
-WelcomeText.TextSize = 12
-WelcomeText.TextTransparency = 0.4
+WelcomeText.Text = "Welcome to The,"
+WelcomeText.TextColor3 = Colors.Text
+WelcomeText.TextSize = 14
 WelcomeText.ZIndex = 3
 
 local HubTitle = Instance.new("TextLabel")
 HubTitle.Parent = Main
 HubTitle.BackgroundTransparency = 1
-HubTitle.Position = UDim2.new(0, 0, 0, 200)
-HubTitle.Size = UDim2.new(1, 0, 0, 35)
+HubTitle.Position = UDim2.new(0, 0, 0, 73)
+HubTitle.Size = UDim2.new(1, 0, 0, 28)
 HubTitle.Font = Enum.Font.GothamBold
-HubTitle.Text = "LOWET HUB"
-HubTitle.TextColor3 = Colors.Text
-HubTitle.TextSize = 28
+HubTitle.Text = "Speed Hub X"
+HubTitle.TextColor3 = Colors.Primary
+HubTitle.TextSize = 22
 HubTitle.ZIndex = 3
 
-local HubGradient = Instance.new("UIGradient")
-HubGradient.Parent = HubTitle
-HubGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Colors.Primary),
-    ColorSequenceKeypoint.new(1, Colors.Secondary)
-}
-HubGradient.Rotation = 0
+-- Key Label
+local KeyLabel = Instance.new("TextLabel")
+KeyLabel.Parent = Main
+KeyLabel.BackgroundTransparency = 1
+KeyLabel.Position = UDim2.new(0, 30, 0, 115)
+KeyLabel.Size = UDim2.new(0, 50, 0, 16)
+KeyLabel.Font = Enum.Font.Gotham
+KeyLabel.Text = "Key"
+KeyLabel.TextColor3 = Colors.TextSecondary
+KeyLabel.TextSize = 12
+KeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+KeyLabel.ZIndex = 3
 
 -- Key Input Container
 local KeyInputFrame = Instance.new("Frame")
 KeyInputFrame.Parent = Main
-KeyInputFrame.BackgroundColor3 = Colors.Surface
+KeyInputFrame.BackgroundColor3 = Colors.InputBg
 KeyInputFrame.BorderSizePixel = 0
-KeyInputFrame.Position = UDim2.new(0.5, -190, 0, 250)
-KeyInputFrame.Size = UDim2.new(0, 380, 0, 50)
+KeyInputFrame.Position = UDim2.new(0, 30, 0, 135)
+KeyInputFrame.Size = UDim2.new(0, 280, 0, 38)
 KeyInputFrame.ZIndex = 3
 
 local KeyInputCorner = Instance.new("UICorner")
-KeyInputCorner.CornerRadius = UDim.new(0, 12)
+KeyInputCorner.CornerRadius = UDim.new(0, 10)
 KeyInputCorner.Parent = KeyInputFrame
 
 local KeyInputStroke = Instance.new("UIStroke")
 KeyInputStroke.Parent = KeyInputFrame
 KeyInputStroke.Color = Colors.SurfaceLight
-KeyInputStroke.Thickness = 2
-KeyInputStroke.Transparency = 0.5
-
--- Key Icon
-local KeyIcon = Instance.new("TextLabel")
-KeyIcon.Parent = KeyInputFrame
-KeyIcon.BackgroundTransparency = 1
-KeyIcon.Position = UDim2.new(0, 15, 0.5, -12)
-KeyIcon.Size = UDim2.new(0, 24, 0, 24)
-KeyIcon.Font = Enum.Font.GothamBold
-KeyIcon.Text = "🔑"
-KeyIcon.TextColor3 = Colors.Primary
-KeyIcon.TextSize = 18
-KeyIcon.ZIndex = 4
+KeyInputStroke.Thickness = 1.5
+KeyInputStroke.Transparency = 0.6
 
 -- Key Input
 local KeyInput = Instance.new("TextBox")
 KeyInput.Parent = KeyInputFrame
 KeyInput.BackgroundTransparency = 1
-KeyInput.Position = UDim2.new(0, 50, 0, 0)
-KeyInput.Size = UDim2.new(1, -60, 1, 0)
+KeyInput.Position = UDim2.new(0, 12, 0, 0)
+KeyInput.Size = UDim2.new(1, -24, 1, 0)
 KeyInput.Font = Enum.Font.Gotham
-KeyInput.PlaceholderText = "Enter your key here..."
-KeyInput.PlaceholderColor3 = Colors.TextSecondary
+KeyInput.PlaceholderText = "insert your key here"
+KeyInput.PlaceholderColor3 = Color3.fromRGB(100, 80, 70)
 KeyInput.Text = ""
 KeyInput.TextColor3 = Colors.Text
-KeyInput.TextSize = 14
+KeyInput.TextSize = 13
 KeyInput.TextXAlignment = Enum.TextXAlignment.Left
 KeyInput.ClearTextOnFocus = false
 KeyInput.ZIndex = 4
 
--- Focus animation
-KeyInput.Focused:Connect(function()
-    TweenService:Create(KeyInputStroke, TweenInfo.new(0.2), {Color = Colors.Primary, Transparency = 0}):Play()
-end)
+-- Paste Button
+local PasteBtn = Instance.new("TextButton")
+PasteBtn.Parent = Main
+PasteBtn.BackgroundColor3 = Colors.Primary
+PasteBtn.BorderSizePixel = 0
+PasteBtn.Position = UDim2.new(0, 320, 0, 135)
+PasteBtn.Size = UDim2.new(0, 70, 0, 38)
+PasteBtn.Font = Enum.Font.GothamBold
+PasteBtn.Text = "Paste"
+PasteBtn.TextColor3 = Colors.Text
+PasteBtn.TextSize = 13
+PasteBtn.ZIndex = 3
 
-KeyInput.FocusLost:Connect(function()
-    TweenService:Create(KeyInputStroke, TweenInfo.new(0.2), {Color = Colors.SurfaceLight, Transparency = 0.5}):Play()
-end)
+local PasteCorner = Instance.new("UICorner")
+PasteCorner.CornerRadius = UDim.new(0, 10)
+PasteCorner.Parent = PasteBtn
 
--- Check Key Button
-local CheckButton = Instance.new("TextButton")
-CheckButton.Parent = Main
-CheckButton.BackgroundColor3 = Colors.Primary
-CheckButton.BorderSizePixel = 0
-CheckButton.Position = UDim2.new(0.5, -190, 0, 315)
-CheckButton.Size = UDim2.new(0, 380, 0, 48)
-CheckButton.Font = Enum.Font.GothamBold
-CheckButton.Text = "VERIFY KEY"
-CheckButton.TextColor3 = Colors.Text
-CheckButton.TextSize = 15
-CheckButton.ZIndex = 3
+-- Submit Key Button
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Parent = Main
+SubmitBtn.BackgroundColor3 = Colors.Primary
+SubmitBtn.BorderSizePixel = 0
+SubmitBtn.Position = UDim2.new(0, 30, 0, 185)
+SubmitBtn.Size = UDim2.new(0, 360, 0, 42)
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.Text = "Submit Key  ➤"
+SubmitBtn.TextColor3 = Colors.Text
+SubmitBtn.TextSize = 14
+SubmitBtn.ZIndex = 3
 
-local CheckCorner = Instance.new("UICorner")
-CheckCorner.CornerRadius = UDim.new(0, 12)
-CheckCorner.Parent = CheckButton
+local SubmitCorner = Instance.new("UICorner")
+SubmitCorner.CornerRadius = UDim.new(0, 10)
+SubmitCorner.Parent = SubmitBtn
 
-local CheckGradient = Instance.new("UIGradient")
-CheckGradient.Parent = CheckButton
-CheckGradient.Color = ColorSequence.new{
+local SubmitGradient = Instance.new("UIGradient")
+SubmitGradient.Parent = SubmitBtn
+SubmitGradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Colors.Primary),
     ColorSequenceKeypoint.new(1, Colors.Secondary)
 }
-CheckGradient.Rotation = 45
+SubmitGradient.Rotation = 45
 
-local CheckGlow = Instance.new("UIStroke")
-CheckGlow.Parent = CheckButton
-CheckGlow.Color = Colors.Glow
-CheckGlow.Thickness = 0
-CheckGlow.Transparency = 0.5
+-- Bottom Text Section
+local BuyKeyText = Instance.new("TextLabel")
+BuyKeyText.Parent = Main
+BuyKeyText.BackgroundTransparency = 1
+BuyKeyText.Position = UDim2.new(0, 0, 0, 240)
+BuyKeyText.Size = UDim2.new(1, 0, 0, 16)
+BuyKeyText.Font = Enum.Font.Gotham
+BuyKeyText.Text = "Need Buy Key Lifetime? "
+BuyKeyText.TextColor3 = Colors.Text
+BuyKeyText.TextSize = 11
+BuyKeyText.ZIndex = 3
 
--- Button Container
-local ButtonContainer = Instance.new("Frame")
-ButtonContainer.Parent = Main
-ButtonContainer.BackgroundTransparency = 1
-ButtonContainer.Position = UDim2.new(0.5, -190, 1, -45)
-ButtonContainer.Size = UDim2.new(0, 380, 0, 35)
-ButtonContainer.ZIndex = 3
+local BuyKeyLink = Instance.new("TextLabel")
+BuyKeyLink.Parent = Main
+BuyKeyLink.BackgroundTransparency = 1
+BuyKeyLink.Position = UDim2.new(0.5, -60, 0, 240)
+BuyKeyLink.Size = UDim2.new(0, 120, 0, 16)
+BuyKeyLink.Font = Enum.Font.GothamBold
+BuyKeyLink.Text = "Click Copy Official Store"
+BuyKeyLink.TextColor3 = Colors.Primary
+BuyKeyLink.TextSize = 11
+BuyKeyLink.ZIndex = 3
 
-local ButtonLayout = Instance.new("UIListLayout")
-ButtonLayout.Parent = ButtonContainer
-ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
-ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-ButtonLayout.Padding = UDim.new(0, 10)
+local SupportText = Instance.new("TextLabel")
+SupportText.Parent = Main
+SupportText.BackgroundTransparency = 1
+SupportText.Position = UDim2.new(0, 0, 0, 260)
+SupportText.Size = UDim2.new(1, 0, 0, 16)
+SupportText.Font = Enum.Font.Gotham
+SupportText.Text = "Need support? "
+SupportText.TextColor3 = Colors.Text
+SupportText.TextSize = 11
+SupportText.ZIndex = 3
 
--- Create Small Buttons Function
-local function CreateSmallButton(text, icon)
+local DiscordLink = Instance.new("TextLabel")
+DiscordLink.Parent = Main
+DiscordLink.BackgroundTransparency = 1
+DiscordLink.Position = UDim2.new(0.5, -35, 0, 260)
+DiscordLink.Size = UDim2.new(0, 70, 0, 16)
+DiscordLink.Font = Enum.Font.GothamBold
+DiscordLink.Text = "Join the Discord"
+DiscordLink.TextColor3 = Color3.fromRGB(114, 137, 218)
+DiscordLink.TextSize = 11
+DiscordLink.ZIndex = 3
+
+-- Bottom Buttons Container
+local BtnContainer = Instance.new("Frame")
+BtnContainer.Parent = Main
+BtnContainer.BackgroundTransparency = 1
+BtnContainer.Position = UDim2.new(0, 30, 1, -45)
+BtnContainer.Size = UDim2.new(0, 360, 0, 32)
+BtnContainer.ZIndex = 3
+
+local BtnLayout = Instance.new("UIListLayout")
+BtnLayout.Parent = BtnContainer
+BtnLayout.FillDirection = Enum.FillDirection.Horizontal
+BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+BtnLayout.Padding = UDim.new(0, 8)
+
+-- Create Bottom Buttons
+local function CreateBottomButton(icon, text)
     local btn = Instance.new("TextButton")
-    btn.Parent = ButtonContainer
+    btn.Parent = BtnContainer
     btn.BackgroundColor3 = Colors.Surface
     btn.BorderSizePixel = 0
-    btn.Size = UDim2.new(0, 118, 0, 35)
+    btn.Size = UDim2.new(0, 113, 0, 32)
     btn.Font = Enum.Font.GothamBold
     btn.Text = icon .. " " .. text
     btn.TextColor3 = Colors.Text
@@ -347,7 +295,7 @@ local function CreateSmallButton(text, icon)
     btn.ZIndex = 3
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = btn
     
     local stroke = Instance.new("UIStroke")
@@ -358,107 +306,124 @@ local function CreateSmallButton(text, icon)
     
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.SurfaceLight}):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.2, Thickness = 2}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.3}):Play()
     end)
     
     btn.MouseLeave:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Surface}):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.7, Thickness = 1.5}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.7}):Play()
     end)
     
     return btn
 end
 
-local GetKeyBtn = CreateSmallButton("Get Key", "🔑")
-local DiscordBtn = CreateSmallButton("Discord", "💬")
-local CopyBtn = CreateSmallButton("Copy Link", "📋")
+local LinkvertiseBtn = CreateBottomButton("🔗", "Linkvertise")
+local LootLabsBtn = CreateBottomButton("🎁", "LootLabs")
+local RinkuBtn = CreateBottomButton("💎", "Rinku.pro")
 
 -- Notification Function
-local function Notify(title, text, duration, color)
+local function Notify(title, text)
     game.StarterGui:SetCore("SendNotification", {
         Title = title;
         Text = text;
-        Duration = duration or 3;
+        Duration = 3;
     })
 end
 
--- Check Key Function
-CheckButton.MouseButton1Click:Connect(function()
+-- Focus animation
+KeyInput.Focused:Connect(function()
+    TweenService:Create(KeyInputStroke, TweenInfo.new(0.2), {Color = Colors.Primary, Transparency = 0.2}):Play()
+end)
+
+KeyInput.FocusLost:Connect(function()
+    TweenService:Create(KeyInputStroke, TweenInfo.new(0.2), {Color = Colors.SurfaceLight, Transparency = 0.6}):Play()
+end)
+
+-- Paste Button Function
+PasteBtn.MouseButton1Click:Connect(function()
+    KeyInput.Text = tostring(getclipboard and getclipboard() or "")
+    Notify("Speed Hub X", "📋 Pasted from clipboard!")
+end)
+
+-- Submit Key Function
+SubmitBtn.MouseButton1Click:Connect(function()
     local key = KeyInput.Text
-    CheckButton.Text = "VERIFYING..."
+    SubmitBtn.Text = "Verifying..."
     
-    task.wait(1)
+    task.wait(0.8)
     
-    if key == "1234" or key == "TESTKEY" or key == "LOWETHUB" then
-        CheckButton.Text = "✓ ACCESS GRANTED"
-        CheckButton.BackgroundColor3 = Colors.Success
-        Notify("Lowet Hub", "✓ Key verified successfully!", 3)
+    if key == "1234" or key == "TESTKEY" or key == "SPEEDHUB" then
+        SubmitBtn.Text = "✓ Access Granted"
+        SubmitBtn.BackgroundColor3 = Colors.Success
+        Notify("Speed Hub X", "✓ Key verified successfully!", 3)
         
-        task.wait(1)
-        TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        task.wait(0.8)
+        TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(0.5, 0, 0.5, 0)
         }):Play()
-        TweenService:Create(Blur, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
-        task.wait(0.4)
+        task.wait(0.3)
         UI:Destroy()
         -- Load your main script here
     else
-        CheckButton.Text = "✗ INVALID KEY"
-        CheckButton.BackgroundColor3 = Colors.Error
-        Notify("Lowet Hub", "✗ Invalid key! Please try again.", 3)
+        SubmitBtn.Text = "✗ Invalid Key"
+        SubmitBtn.BackgroundColor3 = Colors.Error
+        Notify("Speed Hub X", "✗ Invalid key! Please try again.", 3)
         
-        -- Shake animation
-        local originalPos = CheckButton.Position
-        for i = 1, 8 do
-            CheckButton.Position = originalPos + UDim2.new(0, math.random(-5, 5), 0, 0)
-            task.wait(0.05)
+        local originalPos = SubmitBtn.Position
+        for i = 1, 6 do
+            SubmitBtn.Position = originalPos + UDim2.new(0, math.random(-4, 4), 0, 0)
+            task.wait(0.04)
         end
-        CheckButton.Position = originalPos
+        SubmitBtn.Position = originalPos
         
-        task.wait(1.5)
-        CheckButton.Text = "VERIFY KEY"
-        CheckButton.BackgroundColor3 = Colors.Primary
+        task.wait(1.2)
+        SubmitBtn.Text = "Submit Key  ➤"
+        SubmitBtn.BackgroundColor3 = Colors.Primary
         KeyInput.Text = ""
     end
 end)
 
--- Button Actions
-GetKeyBtn.MouseButton1Click:Connect(function()
-    setclipboard("https://your-key-link.com")
-    Notify("Lowet Hub", "🔑 Key link copied to clipboard!", 3)
+-- Link Buttons Functions
+LinkvertiseBtn.MouseButton1Click:Connect(function()
+    setclipboard("https://linkvertise.com/your-link")
+    Notify("Speed Hub X", "🔗 Linkvertise link copied!")
 end)
 
-DiscordBtn.MouseButton1Click:Connect(function()
-    setclipboard("https://discord.gg/yourlink")
-    Notify("Lowet Hub", "💬 Discord invite copied!", 3)
+LootLabsBtn.MouseButton1Click:Connect(function()
+    setclipboard("https://lootlabs.gg/your-link")
+    Notify("Speed Hub X", "🎁 LootLabs link copied!")
 end)
 
-CopyBtn.MouseButton1Click:Connect(function()
-    setclipboard("https://your-key-link.com")
-    Notify("Lowet Hub", "📋 Link copied to clipboard!", 3)
+RinkuBtn.MouseButton1Click:Connect(function()
+    setclipboard("https://rinku.pro/your-link")
+    Notify("Speed Hub X", "💎 Rinku.pro link copied!")
 end)
 
--- Check Button Hover Effect
-CheckButton.MouseEnter:Connect(function()
-    TweenService:Create(CheckButton, TweenInfo.new(0.2), {Size = UDim2.new(0, 390, 0, 50)}):Play()
-    TweenService:Create(CheckGlow, TweenInfo.new(0.2), {Thickness = 3}):Play()
+-- Hover Effects
+SubmitBtn.MouseEnter:Connect(function()
+    TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 368, 0, 44)}):Play()
 end)
 
-CheckButton.MouseLeave:Connect(function()
-    TweenService:Create(CheckButton, TweenInfo.new(0.2), {Size = UDim2.new(0, 380, 0, 48)}):Play()
-    TweenService:Create(CheckGlow, TweenInfo.new(0.2), {Thickness = 0}):Play()
+SubmitBtn.MouseLeave:Connect(function()
+    TweenService:Create(SubmitBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 360, 0, 42)}):Play()
+end)
+
+PasteBtn.MouseEnter:Connect(function()
+    TweenService:Create(PasteBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Secondary}):Play()
+end)
+
+PasteBtn.MouseLeave:Connect(function()
+    TweenService:Create(PasteBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Primary}):Play()
 end)
 
 -- Entrance Animation
 Main.Size = UDim2.new(0, 0, 0, 0)
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Blur.BackgroundTransparency = 1
 
-TweenService:Create(Blur, TweenInfo.new(0.5), {BackgroundTransparency = 0.2}):Play()
-TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-    Size = UDim2.new(0, 450, 0, 390),
-    Position = UDim2.new(0.5, -225, 0.5, -195)
+TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 420, 0, 320),
+    Position = UDim2.new(0.5, -210, 0.5, -160)
 }):Play()
 
 -- Draggable functionality
