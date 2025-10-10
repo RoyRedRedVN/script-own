@@ -80,7 +80,7 @@ KeySystemLabel.BackgroundTransparency = 1
 KeySystemLabel.Position = UDim2.new(0, 25, 0, 12)
 KeySystemLabel.Size = UDim2.new(0, 200, 0, 18)
 KeySystemLabel.Font = Enum.Font.Gotham
-KeySystemLabel.Text = "🔐 KEY SYSTEM"
+KeySystemLabel.Text = "KEY SYSTEM"
 KeySystemLabel.TextColor3 = Colors.Primary
 KeySystemLabel.TextSize = 12
 KeySystemLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -127,7 +127,7 @@ HubTitle.BackgroundTransparency = 1
 HubTitle.Position = UDim2.new(0, 0, 0, 95)
 HubTitle.Size = UDim2.new(1, 0, 0, 35)
 HubTitle.Font = Enum.Font.GothamBold
-HubTitle.Text = "Speed Hub X"
+HubTitle.Text = "Lowet Hub"
 HubTitle.TextColor3 = Colors.Primary
 HubTitle.TextSize = 26
 HubTitle.ZIndex = 3
@@ -205,7 +205,7 @@ SubmitBtn.BorderSizePixel = 0
 SubmitBtn.Position = UDim2.new(0, 30, 0, 235)
 SubmitBtn.Size = UDim2.new(0, 360, 0, 48)
 SubmitBtn.Font = Enum.Font.GothamBold
-SubmitBtn.Text = "Submit Key  ➤"
+SubmitBtn.Text = "Submit Key >"
 SubmitBtn.TextColor3 = Colors.Text
 SubmitBtn.TextSize = 15
 SubmitBtn.ZIndex = 3
@@ -297,9 +297,9 @@ local function CreateBottomButton(icon, text)
     return btn
 end
 
-local LinkvertiseBtn = CreateBottomButton("🔗", "Linkvertise")
-local LootLabsBtn = CreateBottomButton("🎁", "LootLabs")
-local RinkuBtn = CreateBottomButton("💎", "Rinku.pro")
+local LinkvertiseBtn = CreateBottomButton("", "Linkvertise")
+local LootLabsBtn = CreateBottomButton("", "LootLabs")
+local RinkuBtn = CreateBottomButton("", "Rinku.pro")
 
 -- Notification Function
 local function Notify(title, text)
@@ -322,7 +322,7 @@ end)
 -- Paste Button Function
 PasteBtn.MouseButton1Click:Connect(function()
     KeyInput.Text = tostring(getclipboard and getclipboard() or "")
-    Notify("Speed Hub X", "📋 Pasted from clipboard!")
+            Notify("Lowet Hub", "Pasted from clipboard!")
 end)
 
 -- Submit Key Function
@@ -333,9 +333,9 @@ SubmitBtn.MouseButton1Click:Connect(function()
     task.wait(0.8)
     
     if key == "1234" or key == "TESTKEY" or key == "67" then
-        SubmitBtn.Text = "✓ Access Granted"
+        SubmitBtn.Text = "Access Granted"
         SubmitBtn.BackgroundColor3 = Colors.Success
-        Notify("Speed Hub X", "✓ Key verified successfully!", 3)
+        Notify("Lowet Hub", "Key verified successfully!", 3)
         
         task.wait(0.8)
         TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
@@ -346,9 +346,9 @@ SubmitBtn.MouseButton1Click:Connect(function()
         UI:Destroy()
         -- Load your main script here
     else
-        SubmitBtn.Text = "✗ Invalid Key"
+        SubmitBtn.Text = "Invalid Key"
         SubmitBtn.BackgroundColor3 = Colors.Error
-        Notify("Speed Hub X", "✗ Invalid key! Please try again.", 3)
+        Notify("Lowet Hub", "Invalid key! Please try again.", 3)
         
         local originalPos = SubmitBtn.Position
         for i = 1, 6 do
@@ -358,7 +358,7 @@ SubmitBtn.MouseButton1Click:Connect(function()
         SubmitBtn.Position = originalPos
         
         task.wait(1.2)
-        SubmitBtn.Text = "Submit Key  ➤"
+        SubmitBtn.Text = "Submit Key >"
         SubmitBtn.BackgroundColor3 = Colors.Primary
         KeyInput.Text = ""
     end
@@ -367,17 +367,17 @@ end)
 -- Link Buttons Functions
 LinkvertiseBtn.MouseButton1Click:Connect(function()
     setclipboard("https://linkvertise.com/your-link")
-    Notify("Speed Hub X", "🔗 Linkvertise link copied!")
+    Notify("Lowet Hub", "🔗 Linkvertise link copied!")
 end)
 
 LootLabsBtn.MouseButton1Click:Connect(function()
     setclipboard("https://lootlabs.gg/your-link")
-    Notify("Speed Hub X", "🎁 LootLabs link copied!")
+    Notify("Lowet Hub", "🎁 LootLabs link copied!")
 end)
 
 RinkuBtn.MouseButton1Click:Connect(function()
     setclipboard("https://rinku.pro/your-link")
-    Notify("Speed Hub X", "💎 Rinku.pro link copied!")
+    Notify("Lowet Hub", "💎 Rinku.pro link copied!")
 end)
 
 -- Hover Effects
