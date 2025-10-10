@@ -22,6 +22,32 @@ local Window = WindUI:CreateWindow({
     Transparent = true,
     Theme = "POWER",
     Resizable = true,
+
+User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function()
+            print("oh")
+        end,
+
+KeySystem = { 
+        -- ↓ Optional. You can remove it.
+        Key = { "1234", "5678" },
+        
+        Note = "Lowet Hub (Key Version).",
+        
+        -- ↓ Optional. You can remove it.
+        
+        
+        -- ↓ Optional. You can remove it.
+        URL = "YOUR LINK TO GET KEY (Discord, Linkvertise, Pastebin, etc.)",
+        
+        -- ↓ Optional. You can remove it.
+        SaveKey = true, -- automatically save and load the key.
+        
+        -- ↓ Optional. You can remove it.
+        -- API = {} ← Services. Read about it below ↓
+    },
 })
 
 Window:EditOpenButton({
@@ -32,14 +58,6 @@ Window:EditOpenButton({
     Color = ColorSequence.new(Color3.fromRGB(255, 107, 53), Color3.fromRGB(255, 140, 66)),
     Draggable = true,
 })
-
-User = {
-        Enabled = true,
-        Anonymous = false,
-        Callback = function()
-            print("clicked")
-        end,
-    },
 
 Window:Tag({Title = "V1.0", Color = Color3.fromRGB(255, 107, 53), Radius = 13})
 Window:Tag({Title = "BETA", Color = Color3.fromRGB(255, 140, 66), Radius = 13})
