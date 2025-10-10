@@ -19,7 +19,7 @@ local Colors = {
 
 -- Create UI
 local UI = Instance.new("ScreenGui")
-UI.Name = "LowetHubCompact"
+UI.Name = "Lowet Hub"
 UI.Parent = CoreGui
 UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -28,8 +28,8 @@ local Main = Instance.new("Frame")
 Main.Parent = UI
 Main.BackgroundColor3 = Colors.Background
 Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.5, -210, 0.5, -160)
-Main.Size = UDim2.new(0, 420, 0, 320)
+Main.Position = UDim2.new(0.5, -175, 0.5, -190)
+Main.Size = UDim2.new(0, 350, 0, 380)
 Main.ClipsDescendants = true
 Main.ZIndex = 2
 
@@ -127,7 +127,7 @@ HubTitle.BackgroundTransparency = 1
 HubTitle.Position = UDim2.new(0, 0, 0, 73)
 HubTitle.Size = UDim2.new(1, 0, 0, 28)
 HubTitle.Font = Enum.Font.GothamBold
-HubTitle.Text = "Speed Hub X"
+HubTitle.Text = "Lowet Hub"
 HubTitle.TextColor3 = Colors.Primary
 HubTitle.TextSize = 22
 HubTitle.ZIndex = 3
@@ -150,8 +150,8 @@ local KeyInputFrame = Instance.new("Frame")
 KeyInputFrame.Parent = Main
 KeyInputFrame.BackgroundColor3 = Colors.InputBg
 KeyInputFrame.BorderSizePixel = 0
-KeyInputFrame.Position = UDim2.new(0, 30, 0, 135)
-KeyInputFrame.Size = UDim2.new(0, 280, 0, 38)
+KeyInputFrame.Position = UDim2.new(0, 25, 0, 135)
+KeyInputFrame.Size = UDim2.new(0, 230, 0, 38)
 KeyInputFrame.ZIndex = 3
 
 local KeyInputCorner = Instance.new("UICorner")
@@ -185,8 +185,8 @@ local PasteBtn = Instance.new("TextButton")
 PasteBtn.Parent = Main
 PasteBtn.BackgroundColor3 = Colors.Primary
 PasteBtn.BorderSizePixel = 0
-PasteBtn.Position = UDim2.new(0, 320, 0, 135)
-PasteBtn.Size = UDim2.new(0, 70, 0, 38)
+PasteBtn.Position = UDim2.new(0, 265, 0, 135)
+PasteBtn.Size = UDim2.new(0, 60, 0, 38)
 PasteBtn.Font = Enum.Font.GothamBold
 PasteBtn.Text = "Paste"
 PasteBtn.TextColor3 = Colors.Text
@@ -352,7 +352,7 @@ SubmitBtn.MouseButton1Click:Connect(function()
     
     task.wait(0.8)
     
-    if key == "1234" or key == "TESTKEY" or key == "SPEEDHUB" then
+    if key == "1234" or key == "TESTKEY" or key == "67" then
         SubmitBtn.Text = "✓ Access Granted"
         SubmitBtn.BackgroundColor3 = Colors.Success
         Notify("Speed Hub X", "✓ Key verified successfully!", 3)
@@ -368,7 +368,7 @@ SubmitBtn.MouseButton1Click:Connect(function()
     else
         SubmitBtn.Text = "✗ Invalid Key"
         SubmitBtn.BackgroundColor3 = Colors.Error
-        Notify("Speed Hub X", "✗ Invalid key! Please try again.", 3)
+        Notify("LowetHub", "✗ Invalid key! Please try again.", 3)
         
         local originalPos = SubmitBtn.Position
         for i = 1, 6 do
@@ -387,17 +387,17 @@ end)
 -- Link Buttons Functions
 LinkvertiseBtn.MouseButton1Click:Connect(function()
     setclipboard("https://linkvertise.com/your-link")
-    Notify("Speed Hub X", "🔗 Linkvertise link copied!")
+    Notify("LowetHub", "🔗 Linkvertise link copied!")
 end)
 
 LootLabsBtn.MouseButton1Click:Connect(function()
     setclipboard("https://lootlabs.gg/your-link")
-    Notify("Speed Hub X", "🎁 LootLabs link copied!")
+    Notify("LowetHub", "🎁 LootLabs link copied!")
 end)
 
 RinkuBtn.MouseButton1Click:Connect(function()
     setclipboard("https://rinku.pro/your-link")
-    Notify("Speed Hub X", "💎 Rinku.pro link copied!")
+    Notify("LowetHub", "💎 Rinku.pro link copied!")
 end)
 
 -- Hover Effects
