@@ -23,24 +23,23 @@ local Window = WindUI:CreateWindow({
     Theme = "POWER",
     Resizable = true,
 
-User = {
+   User = {
         Enabled = true,
         Anonymous = false,
         Callback = function()
-            print("oh")
+            print("clicked")
         end,
-
-KeySystem = { 
+    },
+    
+    --       remove this all, 
+    -- !  ↓  if you DON'T need the key system
+    KeySystem = { 
         -- ↓ Optional. You can remove it.
         Key = { "1234", "5678" },
         
-        Note = "Lowet Hub (Key Version).",
-        
+        Note = "Lowet Hub ( Key Vesion ).",       
         -- ↓ Optional. You can remove it.
-        
-        
-        -- ↓ Optional. You can remove it.
-        URL = "YOUR LINK TO GET KEY (Discord, Linkvertise, Pastebin, etc.)",
+        URL = "YOUR LINK TO GET KEY",
         
         -- ↓ Optional. You can remove it.
         SaveKey = true, -- automatically save and load the key.
