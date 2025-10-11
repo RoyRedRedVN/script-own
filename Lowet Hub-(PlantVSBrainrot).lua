@@ -52,6 +52,19 @@ local bNS,bRS,sS,gS,eS={},{},{},{},nil
 local bat={"Aluminum Bat","Iron Core Bat","Iron Plate Bat","Leather Grip Bat","Basic Bat"}
 local cB=nil
 
+-- Initialize global flags
+getgenv().AutoAttackBrainrot = getgenv().AutoAttackBrainrot or false
+getgenv().AutoAttackBrainrotOnlyBoss = getgenv().AutoAttackBrainrotOnlyBoss or false
+getgenv().AutoGiveWantedBrainrot = getgenv().AutoGiveWantedBrainrot or false
+getgenv().AutoRestartEvent = getgenv().AutoRestartEvent or false
+getgenv().AutoCollectMoney = getgenv().AutoCollectMoney or false
+getgenv().AutoEquipBestBrainrot = getgenv().AutoEquipBestBrainrot or false
+getgenv().AllowSellInventoryFull = getgenv().AllowSellInventoryFull or false
+getgenv().AutoSell = getgenv().AutoSell or false
+getgenv().AutoOpenEgg = getgenv().AutoOpenEgg or false
+getgenv().AutoBuySeedsSelected = getgenv().AutoBuySeedsSelected or false
+getgenv().AutoBuyGearSelected = getgenv().AutoBuyGearSelected or false
+
 local function gP()
     local plots=workspace:FindFirstChild("Plots")
     if not plots then return nil end
@@ -59,6 +72,7 @@ local function gP()
         local pl=plots:FindFirstChild(tostring(i))
         if pl and pl:GetAttribute("Owner")==P.Name then return i,pl end
     end
+    return nil
 end
 
 local function aB(br)
@@ -66,7 +80,7 @@ local function aB(br)
     local s=br:FindFirstChild("Stats")
     local hl=s and s:FindFirstChild("Health")
     local f=hl and hl:FindFirstChild("Filler")
-    return f and f:IsA("Frame")and f.Size.X.Scale>cfg.mhs
+    return f and f:IsA("Frame") and f.Size.X.Scale>cfg.mhs
 end
 
 local function bRV(br)
@@ -85,6 +99,7 @@ local function bN(br)
     local t=s:FindFirstChild("Title")
     if not t then return nil end
     if t:IsA("TextLabel")or t:IsA("TextButton")then return t.Text elseif t:IsA("StringValue")then return t.Value end
+    return nil
 end
 
 local function cS(t)
@@ -127,6 +142,7 @@ local function fBT()
     if getgenv().AutoAttackBrainrotOnlyBoss then local b=cand.boss[1]return b and b.model,b and b.name end
     local pO={cand.boss,cand.byN,cand.byR,cand.norm}
     for _,g in ipairs(pO)do if #g>0 then return g[1].model,g[1].name end end
+    return nil,nil
 end
 
 local function tpM(m)
@@ -140,7 +156,8 @@ local function eqB()
     if not c or not h or h.Health<=0 then return false end
     for _,n in ipairs(bat)do local t=c:FindFirstChild(n)if t and t:IsA("Tool")then cB=t return true end end
     local bp=P:FindFirstChild("Backpack")
-    if bp then for _,n in ipairs(bat)do local t=bp:FindFirstChild(n)if t and t:IsA("Tool")then h:EquipTool(t)cB=t return true end end end
+    if bp then for _,n in ipairs(bat)do local t=bp:FindFirstChild(n)if t and t:IsA("Tool")then h:EquipTool(t)cB=t task.wait(0.1) return true end end end
+    return false
 end
 
 local function sF(rm,...)if not rm then return false end return pcall(function()rm:FireServer(...)end)end
@@ -153,7 +170,7 @@ FarmTab:Dropdown({
     Title="Brainrot Name",
     Values={"None","Orcalero Orcala","Ospedale","Pipi Kiwi","Pot Hotspot","Rhino Toasterino","Matteo"},
     Multi=true,
-    Callback=function(o)bNS=o end
+    Callback=function(o)bNS=o or {} end
 })
 
 FarmTab:Dropdown({
@@ -161,7 +178,7 @@ FarmTab:Dropdown({
     Title="Brainrot Rarity",
     Values={"Rare","Epic","Legendary","Mythic","Godly","Secret","Limited"},
     Multi=true,
-    Callback=function(o)bRS=o end
+    Callback=function(o)bRS=o or {} end
 })
 
 FarmTab:Toggle({
@@ -291,7 +308,7 @@ SeedTab:Dropdown({
     Title="Choose Seeds",
     Values={"None","Cactus Seed","Strawberry Seed","Pumpkin Seed","Sunflower Seed","Dragon Fruit Seed"},
     Multi=true,
-    Callback=function(o)sS=o end
+    Callback=function(o)sS=o or {} end
 })
 
 SeedTab:Toggle({
@@ -308,7 +325,7 @@ GearTab:Dropdown({
     Title="Choose Gear",
     Values={"None","Water Bucket","Frost Grenade","Banana Gun","Frost Blower","Carrot Launcher"},
     Multi=true,
-    Callback=function(o)gS=o end
+    Callback=function(o)gS=o or {} end
 })
 
 GearTab:Toggle({
@@ -327,13 +344,13 @@ ConfigTab:Input({
     Title="Config Name",
     Icon="file-cog",
     Value="default",
-    Callback=function(v)CN=v end
+    Callback=function(v)CN=v or "default" end
 })
 
 ConfigTab:Dropdown({
     Title="All Configs",
     Values=CM:AllConfigs(),
-    Callback=function(v)CN=v end
+    Callback=function(v)CN=v or "default" end
 })
 
 ConfigTab:Button({
@@ -356,18 +373,173 @@ ConfigTab:Button({
     end
 })
 
-spawn(function()local aD=1/math.max(1,cfg.ar)while true do if not getgenv().AutoAttackBrainrot then task.wait(0.1)else if not cB then eqB()end local tg,tn=fBT()if tg and tn and aB(tg)then local aR=R:FindFirstChild("AttacksServer")aR=aR and aR:FindFirstChild("WeaponAttack")pcall(function()tpM(tg)end)for i=1,cfg.apb do if not getgenv().AutoAttackBrainrot or not aB(tg)then break end if aR then sF(aR,{tn})end task.wait(aD)end else task.wait(0.05)end end end end)
+-- Auto Attack Loop
+task.spawn(function()
+    local aD=1/math.max(1,cfg.ar)
+    while task.wait(0.1) do
+        if getgenv().AutoAttackBrainrot then
+            if not cB then eqB() end
+            local tg,tn=fBT()
+            if tg and tn and aB(tg)then
+                local aR=R:FindFirstChild("AttacksServer")
+                aR=aR and aR:FindFirstChild("WeaponAttack")
+                pcall(function()tpM(tg)end)
+                for i=1,cfg.apb do
+                    if not getgenv().AutoAttackBrainrot or not aB(tg)then break end
+                    if aR then sF(aR,{tn})end
+                    task.wait(aD)
+                end
+            end
+        end
+    end
+end)
 
-spawn(function()while true do task.wait(cfg.bd)sS,gS=cS(sS),cS(gS)local bR=R:FindFirstChild("BuyItem")local bG=R:FindFirstChild("BuyGear")if getgenv().AutoBuySeedsSelected and next(sS or{})and bR then for s,_ in pairs(sS)do sF(bR,s,true)task.wait(cfg.bd)end end if getgenv().AutoBuyGearSelected and next(gS or{})and bG then for g,_ in pairs(gS)do sF(bG,g,true)task.wait(cfg.bd)end end end end)
+-- Auto Buy Loop
+task.spawn(function()
+    while task.wait(cfg.bd) do
+        sS,gS=cS(sS),cS(gS)
+        local bR=R:FindFirstChild("BuyItem")
+        local bG=R:FindFirstChild("BuyGear")
+        if getgenv().AutoBuySeedsSelected and next(sS or{})and bR then
+            for s,_ in pairs(sS)do
+                sF(bR,s,true)
+                task.wait(cfg.bd)
+            end
+        end
+        if getgenv().AutoBuyGearSelected and next(gS or{})and bG then
+            for g,_ in pairs(gS)do
+                sF(bG,g,true)
+                task.wait(cfg.bd)
+            end
+        end
+    end
+end)
 
-spawn(function()while true do task.wait(cfg.ec)if not getgenv().AutoRestartEvent then continue end pcall(function()local g=P.PlayerGui and P.PlayerGui:FindFirstChild("Main")local w=g and g:FindFirstChild("WantedPosterGui")local f=w and w:FindFirstChild("Frame")local cp=f and f:FindFirstChild("Main_Complete")if cp and cp.Visible then local it=R:FindFirstChild("Events")it=it and it:FindFirstChild("Prison")it=it and it:FindFirstChild("Interact")if it then sF(it,"ResetRequest")end end end)end end)
+-- Auto Restart Event Loop
+task.spawn(function()
+    while task.wait(cfg.ec) do
+        if getgenv().AutoRestartEvent then
+            pcall(function()
+                local g=P.PlayerGui and P.PlayerGui:FindFirstChild("Main")
+                local w=g and g:FindFirstChild("WantedPosterGui")
+                local f=w and w:FindFirstChild("Frame")
+                local cp=f and f:FindFirstChild("Main_Complete")
+                if cp and cp.Visible then
+                    local it=R:FindFirstChild("Events")
+                    it=it and it:FindFirstChild("Prison")
+                    it=it and it:FindFirstChild("Interact")
+                    if it then sF(it,"ResetRequest")end
+                end
+            end)
+        end
+    end
+end)
 
-spawn(function()while true do task.wait(cfg.wc)if not getgenv().AutoGiveWantedBrainrot then continue end pcall(function()local g=P.PlayerGui and P.PlayerGui:FindFirstChild("Main")local w=g and g:FindFirstChild("WantedPosterGui")local f=w and w:FindFirstChild("Frame")if not f then return end local mF=f:FindFirstChild("Main")if not mF or not mF.Visible then return end local wI=mF:FindFirstChild("WantedItem")local t=wI and wI:FindFirstChild("WantedItem_Title")local wN=t and(t.Text or t.Value)if not wN or wN==""then return end local bp=P:FindFirstChild("Backpack")if not bp or not c or not h then return end local tg=bp:FindFirstChild(wN)or c:FindFirstChild(wN)if tg then if tg.Parent==bp then h:EquipTool(tg)task.wait(0.05)end local it=R:FindFirstChild("Events")it=it and it:FindFirstChild("Prison")it=it and it:FindFirstChild("Interact")if it then sF(it,"TurnIn")end end end)end end)
+-- Auto Give Wanted Loop
+task.spawn(function()
+    while task.wait(cfg.wc) do
+        if getgenv().AutoGiveWantedBrainrot then
+            pcall(function()
+                local g=P.PlayerGui and P.PlayerGui:FindFirstChild("Main")
+                local w=g and g:FindFirstChild("WantedPosterGui")
+                local f=w and w:FindFirstChild("Frame")
+                if not f then return end
+                local mF=f:FindFirstChild("Main")
+                if not mF or not mF.Visible then return end
+                local wI=mF:FindFirstChild("WantedItem")
+                local t=wI and wI:FindFirstChild("WantedItem_Title")
+                local wN=t and(t.Text or t.Value)
+                if not wN or wN==""then return end
+                local bp=P:FindFirstChild("Backpack")
+                if not bp or not c or not h then return end
+                local tg=bp:FindFirstChild(wN)or c:FindFirstChild(wN)
+                if tg then
+                    if tg.Parent==bp then h:EquipTool(tg)task.wait(0.05)end
+                    local it=R:FindFirstChild("Events")
+                    it=it and it:FindFirstChild("Prison")
+                    it=it and it:FindFirstChild("Interact")
+                    if it then sF(it,"TurnIn")end
+                end
+            end)
+        end
+    end
+end)
 
-spawn(function()while true do task.wait(cfg.eo)if not getgenv().AutoOpenEgg or not eS then continue end pcall(function()local bp=P:FindFirstChild("Backpack")if not bp or not c then return end local eg=bp:FindFirstChild(eS)or c:FindFirstChild(eS)if eg then if h and eg.Parent==bp then h:EquipTool(eg)task.wait(0.02)end local oR=R:FindFirstChild("OpenEgg")if oR then sF(oR)end end end)end end)
+-- Auto Open Egg Loop
+task.spawn(function()
+    while task.wait(cfg.eo) do
+        if getgenv().AutoOpenEgg and eS and eS~="None" then
+            pcall(function()
+                local bp=P:FindFirstChild("Backpack")
+                if not bp or not c then return end
+                local eg=bp:FindFirstChild(eS)or c:FindFirstChild(eS)
+                if eg then
+                    if h and eg.Parent==bp then h:EquipTool(eg)task.wait(0.02)end
+                    local oR=R:FindFirstChild("OpenEgg")
+                    if oR then sF(oR)end
+                end
+            end)
+        end
+    end
+end)
 
-spawn(function()local eqR=R:FindFirstChild("EquipBestBrainrots")while true do if getgenv().AutoEquipBestBrainrot and eqR then pcall(function()sF(eqR)end)task.wait(eD or cfg.ei)else task.wait(0.5)end end end)
+-- Auto Equip Best Loop
+task.spawn(function()
+    local eqR=R:FindFirstChild("EquipBestBrainrots")
+    while task.wait(0.5) do
+        if getgenv().AutoEquipBestBrainrot and eqR then
+            pcall(function()sF(eqR)end)
+            task.wait(eD or cfg.ei)
+        end
+    end
+end)
 
-spawn(function()local slR=R:FindFirstChild("ItemSell")while true do task.wait(math.max(0.1,sD or cfg.sm))if not getgenv().AutoSell then continue end local sS=true if getgenv().AllowSellInventoryFull then local bp=P:FindFirstChild("Backpack")sS=bp and #bp:GetChildren()>=150 end if sS and slR then pcall(function()sF(slR,nil)end)end end end)
+-- Auto Sell Loop
+task.spawn(function()
+    local slR=R:FindFirstChild("ItemSell")
+    while task.wait(math.max(0.1,sD or cfg.sm)) do
+        if getgenv().AutoSell then
+            local sS=true
+            if getgenv().AllowSellInventoryFull then
+                local bp=P:FindFirstChild("Backpack")
+                sS=bp and #bp:GetChildren()>=150
+            end
+            if sS and slR then pcall(function()sF(slR,nil)end)end
+        end
+    end
+end)
 
-spawn(function()local vis={}while true do task.wait(math.max(cfg.ci,cD or cfg.ci))if not getgenv().AutoCollectMoney then vis={}continue end pcall(function()local pN,pl=gP()if not pl then return end local pls=pl:FindFirstChild("Plants")if not pls or not c or not r then return end for _,pt in ipairs(pls:GetChildren())do if not pt:IsA("Model")then continue end local br=pt:FindFirstChild("Brainrot")if not br then continue end local id=tostring(br:GetFullName())local pUI=br:FindFirstChild("PlatformUI")local of=pUI and pUI:FindFirstChild("Offline")if vis[id]and of and of.Visible==false then vis[id]=nil elseif not vis[id]then local tg=br:FindFirstChild("Hitbox")or br.PrimaryPart or br:FindFirstChildWhichIsA("BasePart",true)if tg then r.CFrame=tg.CFrame r.AssemblyLinearVelocity=Vector3.zero task.wait(0.15)if pUI and of and of.Visible==false then vis[id]=true end end end end end)end end)
+-- Auto Collect Money Loop
+task.spawn(function()
+    local vis={}
+    while task.wait(math.max(cfg.ci,cD or cfg.ci)) do
+        if not getgenv().AutoCollectMoney then vis={} continue end
+        pcall(function()
+            local pN,pl=gP()
+            if not pl then return end
+            local pls=pl:FindFirstChild("Plants")
+            if not pls or not c or not r then return end
+            for _,pt in ipairs(pls:GetChildren())do
+                if not pt:IsA("Model")then continue end
+                local br=pt:FindFirstChild("Brainrot")
+                if not br then continue end
+                local id=tostring(br:GetFullName())
+                local pUI=br:FindFirstChild("PlatformUI")
+                local of=pUI and pUI:FindFirstChild("Offline")
+                if vis[id]and of and of.Visible==false then
+                    vis[id]=nil
+                elseif not vis[id]then
+                    local tg=br:FindFirstChild("Hitbox")or br.PrimaryPart or br:FindFirstChildWhichIsA("BasePart",true)
+                    if tg then
+                        r.CFrame=tg.CFrame
+                        r.AssemblyLinearVelocity=Vector3.zero
+                        task.wait(0.15)
+                        if pUI and of and of.Visible==false then vis[id]=true end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+N("Lowet Hub","Script loaded successfully!")
