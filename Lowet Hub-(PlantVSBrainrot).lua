@@ -332,6 +332,465 @@ texTab:Toggle({
     end
 })
 
+-- ==== Caching, Utilities ====
+local cache = {
+    plot = {v = nil, t = 0, d = cfg.CACHE.plot},
+    char = {v = nil, t = 0, d = cfg.CACHE.char},
+    bp = {v = nil, t = 0, d = cfg.CACHE.bp}
+}
+local function getCached(k)
+    local c = cache[k]
+    if not c then return nil end
+    if c.v and tick() - c.t < c.d then return c.v end
+    return nil
+end
+local function updCache(k, v)
+    if not cache[k] then return end
+    cache[k].v = v; cache[k].t = tick()
+end
+local function getChar()
+    local c = getCached("char")
+    if c and c.Parent then return c end
+    local ch = player and player.Character or nil
+    if ch then updCache("char", ch) end
+    return ch
+end
+local function getBackpack()
+    local b = getCached("bp")
+    if b and b.Parent then return b end
+    local bp = player and player:FindFirstChild("Backpack")
+    if bp then updCache("bp", bp) end
+    return bp
+end
+local function getPlayerPlot()
+    local p = getCached("plot")
+    if p then return p.num, p.plot end
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return nil end
+    for i = 1, 6 do
+        local pl = plots:FindFirstChild(tostring(i))
+        if pl and pl:GetAttribute("Owner") == player.Name then
+            updCache("plot", {num = i, plot = pl})
+            return i, pl
+        end
+    end
+    return nil
+end
+local function sFire(remote, ...)
+    if not remote then return false end
+    local args = {...}
+    local ok, err = pcall(function()
+        remote:FireServer(unpack(args))
+    end)
+    if not ok then warn("[sFire]", err) end
+    return ok
+end
 
+-- ==== Brainrot Utilities ====
+local function aliveBR(br)
+    if not br or not br.Parent then return false end
+    local stats = br:FindFirstChild("Stats")
+    local health = stats and stats:FindFirstChild("Health")
+    local filler = health and health:FindFirstChild("Filler")
+    return filler and filler:IsA("Frame") and filler.Size.X.Scale > cfg.MIN_HEALTH_SCALE
+end
+local function brRarityVal(br)
+    if not br then return 0 end
+    local stats = br:FindFirstChild("Stats")
+    local rf = stats and stats:FindFirstChild("Rarity")
+    if not rf then return 0 end
+    for k,v in pairs(rarityPriority) do
+        if rf:FindFirstChild(k) then return v end
+    end
+    local num = rf and rf:FindFirstChildWhichIsA("IntValue")
+    return num and num.Value or 0
+end
+local function brName(br)
+    if not br then return nil end
+    local stats = br:FindFirstChild("Stats")
+    if not stats then return nil end
+    local title = stats:FindFirstChild("Title")
+    local text
+    if title then
+        if title:IsA("TextLabel") or title:IsA("TextButton") then text = title.Text end
+        if title:IsA("StringValue") then text = title.Value end
+    end
+    if not text or text == "" then return nil end
+    for _,n in pairs(namTbl) do
+        if text == n then return n end
+    end
+    return text
+end
+local function cleanSel(tbl)
+    if type(tbl) ~= "table" then return {} end
+    if tbl["None"] then return {} end
+    for i, v in ipairs(tbl) do if v == "None" then return {} end end
+    local out = {}
+    for k, v in pairs(tbl) do if v and v ~= "None" then out[k] = v end end
+    return out
+end
+
+-- ==== Auto Equip Bat ====
+local rebats = {"Aluminum Bat","Iron Core Bat","Iron Plate Bat","Leather Grip Bat","Basic Bat"}
+local curBat = nil
+local function equipBestBat()
+    local ch = getChar()
+    if not ch then return false end
+    local bp = getBackpack()
+    local hum = ch:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health <= 0 then return false end
+    for _,n in ipairs(rebats) do
+        local t = ch:FindFirstChild(n)
+        if t and t:IsA("Tool") then curBat = t; return true end
+    end
+    if bp then
+        for _,n in ipairs(rebats) do
+            local t = bp:FindFirstChild(n)
+            if t and t:IsA("Tool") then hum:EquipTool(t); curBat = t; return true end
+        end
+    end
+    return false
+end
+
+-- ==== Target Selection ====
+local function findBestTarget()
+    local map = workspace:FindFirstChild("ScriptedMap")
+    local brFolder = map and map:FindFirstChild("Brainrots")
+    if not brFolder then return nil, nil end
+    local plotNum = getPlayerPlot()
+    if not plotNum then return nil, nil end
+    brNamSel = cleanSel(brNamSel)
+    brRarSel = cleanSel(brRarSel)
+    local nameFilter = brNamSel or {}
+    local rarFilter = brRarSel or {}
+    local candidates = { bosses = {}, byName = {}, byRarity = {}, normal = {} }
+    local function push(tab, model, rarity, name)
+        tab[#tab + 1] = { model = model, rarity = rarity, name = name }
+    end
+    for _, m in ipairs(brFolder:GetChildren()) do
+        if not m:IsA("Model") then continue end
+        if m:GetAttribute("Plot") ~= plotNum then continue end
+        if not aliveBR(m) then continue end
+        local name = brName(m) or "Unknown"
+        local rarity = brRarityVal(m) or 0
+        local isBoss = m:GetAttribute("Boss") == true
+        if isBoss then push(candidates.bosses, m, rarity, name); continue end
+        if next(nameFilter) and nameFilter[name] then push(candidates.byName, m, rarity, name); continue end
+        if next(rarFilter) then
+            local rf = m:FindFirstChild("Stats") and m.Stats:FindFirstChild("Rarity")
+            if rf then
+                for rarName in pairs(rarFilter) do
+                    if rf:FindFirstChild(rarName) then push(candidates.byRarity, m, rarity, name); goto continueLoop end
+                end
+            end
+        end
+        push(candidates.normal, m, rarity, name)
+        ::continueLoop::
+    end
+    local function sortByRarity(list)
+        table.sort(list, function(a, b) return (a.rarity or 0) > (b.rarity or 0) end)
+    end
+    for _, group in pairs(candidates) do sortByRarity(group) end
+    if getgenv().AutoAttackBrainrotOnlyBoss then local boss = candidates.bosses[1]; return boss and boss.model, boss and boss.name end
+    local priorityOrder = {candidates.bosses,candidates.byName,candidates.byRarity,candidates.normal}
+    for _, group in ipairs(priorityOrder) do if #group > 0 then return group[1].model, group[1].name end end
+    return nil, nil
+end
+
+-- ==== Safe Teleport ====
+local function tpToModel(m)
+    if not m or not m.Parent then return false end
+    local ch = getChar()
+    if not ch then return false end
+    local hrp = ch:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+    local tgt = m:FindFirstChild("HumanoidRootPart") or m.PrimaryPart or m:FindFirstChildWhichIsA("BasePart", true)
+    if not tgt then return false end
+    local ok,err = pcall(function()
+        hrp.CFrame = tgt.CFrame * cfg.TP_OFFSET
+        hrp.AssemblyLinearVelocity = cfg.TP_VEL
+        hrp.AssemblyAngularVelocity = cfg.TP_VEL
+    end)
+    if not ok then warn("[tpToModel]", err) end
+    return ok
+end
+
+-- ==== AUTO FARM BRAINROT ====
+spawn(function()
+    local atkDelay = 1 / math.max(1, cfg.ATTACK_RATE)
+    while true do
+        if not getgenv().AutoAttackBrainrot then
+            task.wait(0.1)
+        else
+            if not curBat then equipBestBat() end
+            local target, tname = findBestTarget()
+            if target and tname and aliveBR(target) then
+                local atkRem = remotesRoot and remotesRoot:FindFirstChild("AttacksServer") and remotesRoot.AttacksServer:FindFirstChild("WeaponAttack")
+                pcall(function() tpToModel(target) end)
+                for i = 1, cfg.ATTACKS_PER_BATCH do
+                    if not getgenv().AutoAttackBrainrot or not aliveBR(target) then break end
+                    if atkRem then sFire(atkRem, {tname}) end
+                    task.wait(atkDelay)
+                end
+                task.wait(0)
+            else
+                task.wait(0.05)
+            end
+        end
+    end
+end)
+
+-- ==== AUTO BUY ====
+spawn(function()
+    while true do
+        task.wait(cfg.BUY_DELAY)
+        seedSel = cleanSel(seedSel)
+        gearSel = cleanSel(gearSel)
+        local buyRem = remotesRoot and remotesRoot:FindFirstChild("BuyItem")
+        local buyGearRem = remotesRoot and remotesRoot:FindFirstChild("BuyGear")
+        if getgenv().AutoBuySeedsSelected and next(seedSel or {}) and buyRem then
+            for s,_ in pairs(seedSel) do sFire(buyRem, s, true); task.wait(cfg.BUY_DELAY) end
+        end
+        if getgenv().AutoBuyAllSeeds and seedTbl and #seedTbl>0 and buyRem then
+            for _,s in ipairs(seedTbl) do sFire(buyRem, s, true); task.wait(cfg.BUY_DELAY) end
+        end
+        if getgenv().AutoBuyBestSeeds and seedTbl and #seedTbl>0 and buyRem then
+            local n = #seedTbl
+            for i = math.max(1,n-3), n do sFire(buyRem, seedTbl[i], true); task.wait(cfg.BUY_DELAY) end
+        end
+        if getgenv().AutoBuyGearSelected and next(gearSel or {}) and buyGearRem then
+            for g,_ in pairs(gearSel) do sFire(buyGearRem, g, true); task.wait(cfg.BUY_DELAY) end
+        end
+        if getgenv().AutoBuyAllGear and gearTbl and #gearTbl>0 and buyGearRem then
+            for _,g in ipairs(gearTbl) do sFire(buyGearRem, g, true); task.wait(cfg.BUY_DELAY) end
+        end
+        if getgenv().AutoBuyBestGear and gearTbl and #gearTbl>0 and buyGearRem then
+            local n = #gearTbl
+            for i = math.max(1,n-1), n do sFire(buyGearRem, gearTbl[i], true); task.wait(cfg.BUY_DELAY) end
+        end
+    end
+end)
+
+-- ==== AUTO RESTART EVENT ====
+spawn(function()
+    while true do
+        task.wait(cfg.EVENT_CHECK)
+        if not getgenv().AutoRestartEvent then continue end
+        pcall(function()
+            local gui = player.PlayerGui and player.PlayerGui:FindFirstChild("Main")
+            local wanted = gui and gui:FindFirstChild("WantedPosterGui")
+            local frame = wanted and wanted:FindFirstChild("Frame")
+            local complete = frame and frame:FindFirstChild("Main_Complete")
+            local req = complete and complete:FindFirstChild("Requirements")
+            local moneyLabel = req and req:FindFirstChild("Money")
+            if moneyLabel and complete.Visible then
+                local required = tonumber(moneyLabel.Text:match("%d+")) or 0
+                local cur = player.leaderstats and player.leaderstats.Money and player.leaderstats.Money.Value or 0
+                if cur >= required then
+                    local interact = remotesRoot and remotesRoot:FindFirstChild("Events") and remotesRoot.Events:FindFirstChild("Prison") and remotesRoot.Events.Prison:FindFirstChild("Interact")
+                    if interact then sFire(interact, "ResetRequest") end
+                end
+            end
+        end)
+    end
+end)
+
+-- ==== AUTO GIVE WANTED ITEM ====
+spawn(function()
+    while true do
+        task.wait(cfg.WANTED_CHECK)
+        if not getgenv().AutoGiveWantedBrainrot then continue end
+        pcall(function()
+            local gui = player.PlayerGui and player.PlayerGui:FindFirstChild("Main")
+            local wanted = gui and gui:FindFirstChild("WantedPosterGui")
+            local frame = wanted and wanted:FindFirstChild("Frame")
+            if not frame then return end
+            local mainFrame = frame:FindFirstChild("Main")
+            local completeFrame = frame:FindFirstChild("Main_Complete")
+            if completeFrame and completeFrame.Visible then return end
+            if not mainFrame or not mainFrame.Visible then return end
+            local wantedItem = mainFrame:FindFirstChild("WantedItem")
+            local title = wantedItem and wantedItem:FindFirstChild("WantedItem_Title")
+            local wantedName = title and (title.Text or title.Value)
+            if not wantedName or wantedName == "" then return end
+            local bp = getBackpack()
+            local ch = getChar()
+            if not bp or not ch then return end
+            local hum = ch:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            local target = bp:FindFirstChild(wantedName) or ch:FindFirstChild(wantedName)
+            if not target then
+                for _,it in ipairs(bp:GetChildren()) do
+                    if it:IsA("Tool") and it:GetAttribute("ItemName") == wantedName then target = it; break end
+                end
+            end
+            if target then
+                if target.Parent == bp then hum:EquipTool(target); task.wait(0.05) end
+                local interact = remotesRoot and remotesRoot:FindFirstChild("Events") and remotesRoot.Events:FindFirstChild("Prison") and remotesRoot.Events.Prison:FindFirstChild("Interact")
+                if interact then sFire(interact, "TurnIn") end
+                task.wait(0.1)
+            end
+        end)
+    end
+end)
+
+-- ==== AUTO TOOL ====
+local blowerActive = false
+local equippedTool = nil
+local currentToolName = nil
+local lastUse = {}
+local function getUseItemRemote() return remotesRoot and remotesRoot:FindFirstChild("UseItem") end
+local function getToolFromCharOrBP(toolName)
+    local ch, bp = getChar(), getBackpack()
+    if not ch or not bp then return nil end
+    local t = ch:FindFirstChild(toolName)
+    if t and t:IsA("Tool") then return t end
+    t = bp:FindFirstChild(toolName)
+    if t and t:IsA("Tool") then
+        local hum = ch:FindFirstChildOfClass("Humanoid")
+        if hum then hum:EquipTool(t) end
+        task.wait(0.05)
+        return ch:FindFirstChild(toolName)
+    end
+    return nil
+end
+local function canUse(toolName)
+    local info = toolsInfo[toolName]
+    if not info then return false end
+    local last = lastUse[toolName] or 0
+    return (tick() - last) >= info.time
+end
+task.spawn(function()
+    while task.wait(0.1) do
+        local auto = getgenv().AutoUseTools
+        local ch, hum = getChar(), nil
+        if ch then hum = ch:FindFirstChildOfClass("Humanoid") end
+        if not auto or not ch or not hum or hum.Health <= 0 then
+            if blowerActive then
+                local rem = getUseItemRemote()
+                local t = ch and ch:FindFirstChild("Frost Blower")
+                if rem and t then sFire(rem, {{Tool = t, Toggle = false}}) end
+                blowerActive = false
+            end
+            equippedTool, currentToolName = nil, nil
+            continue
+        end
+        local target = findBestTarget()
+        if not (target and aliveBR(target)) then continue end
+        local pos = (target.PrimaryPart and target.PrimaryPart.Position)
+            or (target.Position)
+            or (target:FindFirstChildWhichIsA("BasePart") and target:FindFirstChildWhichIsA("BasePart").Position)
+        if not pos then continue end
+        local rem = getUseItemRemote()
+        if not rem then continue end
+        local usableTool, usableInfo, usableName
+        for _, toolName in ipairs(toolsSel) do
+            if toolName == "None" then continue end
+            if not canUse(toolName) then continue end
+            local tool = getToolFromCharOrBP(toolName)
+            if tool then usableTool, usableInfo, usableName = tool, toolsInfo[toolName], toolName; break end
+        end
+        if not usableTool or not usableInfo then continue end
+        currentToolName = usableName
+        if usableInfo.mode == "single" then
+            sFire(rem, {{Tool = usableTool, Toggle = true, Pos = pos}})
+            lastUse[usableName] = tick()
+        elseif usableInfo.mode == "toggle" then
+            if not blowerActive then
+                sFire(rem, {{Tool = usableTool, Toggle = true}})
+                blowerActive = true
+            end
+        end
+    end
+end)
+
+-- ==== AUTO OPEN EGG ====
+spawn(function()
+    local openRem = remotesRoot and remotesRoot:FindFirstChild("OpenEgg")
+    while true do
+        task.wait(cfg.EGG_OPEN)
+        if not getgenv().AutoOpenEgg or not eggSel or not openRem then continue end
+        pcall(function()
+            local bp = getBackpack()
+            local ch = getChar()
+            if not bp or not ch then return end
+            local egg = bp:FindFirstChild(eggSel) or ch:FindFirstChild(eggSel)
+            if egg then
+                local hum = ch:FindFirstChildOfClass("Humanoid")
+                if hum and egg.Parent == bp then hum:EquipTool(egg); task.wait(0.02) end
+                sFire(openRem)
+            end
+        end)
+    end
+end)
+
+-- ==== AUTO EQUIP BEST BRAINROT ====
+spawn(function()
+    local equipRem = remotesRoot and remotesRoot:FindFirstChild("EquipBestBrainrots")
+    while true do
+        if getgenv().AutoEquipBestBrainrot and equipRem then
+            pcall(function() sFire(equipRem) end)
+            task.wait(eqDly or cfg.EQUIP_INTERVAL)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+-- ==== AUTO SELL ====
+spawn(function()
+    local sellRem = remotesRoot and remotesRoot:FindFirstChild("ItemSell")
+    while true do
+        task.wait(math.max(0.1, sellDly or cfg.SELL_MIN))
+        if not getgenv().AutoSell then continue end
+        local shouldSell = true
+        if getgenv().AllowSellInventoryFull then
+            local bp = getBackpack()
+            shouldSell = bp and #bp:GetChildren() >= 150
+        end
+        if shouldSell and sellRem then pcall(function() sFire(sellRem, nil) end) end
+    end
+end)
+
+-- ==== AUTO COLLECT MONEY ====
+spawn(function()
+    local visited = {}
+    while true do
+        task.wait(math.max(cfg.COLLECT_INTERVAL, colDly or cfg.COLLECT_INTERVAL))
+        if not getgenv().AutoCollectMoney then visited = {}; continue end
+        pcall(function()
+            local plotNum, plot = getPlayerPlot()
+            if not plot then return end
+            local plants = plot:FindFirstChild("Plants")
+            if not plants then return end
+            local ch = getChar()
+            if not ch then return end
+            local hrp = ch:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _,plant in ipairs(plants:GetChildren()) do
+                if not plant:IsA("Model") then goto cont2 end
+                local br = plant:FindFirstChild("Brainrot")
+                if not br then goto cont2 end
+                local id = tostring((pcall(function() return br:GetDebugId() end) and br:GetDebugId()) or br:GetAttribute("ID") or br:GetFullName())
+                local platformUI = br:FindFirstChild("PlatformUI")
+                local offline = platformUI and platformUI:FindFirstChild("Offline")
+                if visited[id] and offline and offline.Visible == false then
+                    visited[id] = nil
+                elseif not visited[id] then
+                    local target = br:FindFirstChild("Hitbox") or br.PrimaryPart or br:FindFirstChildWhichIsA("BasePart", true)
+                    if target then
+                        hrp.CFrame = target.CFrame
+                        hrp.AssemblyLinearVelocity = Vector3.zero
+                        task.wait(0.15)
+                        if platformUI and offline and offline.Visible == false then
+                            visited[id] = true
+                        end
+                    end
+                end
+                ::cont2::
+            end
+        end)
+    end
+end)
 
 Notify("Lowet Hub Loaded", "Welcome to Plants Vs Brainrot")
